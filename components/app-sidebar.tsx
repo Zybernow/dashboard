@@ -1,0 +1,179 @@
+"use client"
+
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useState } from "react"
+import {
+  BellIcon,
+  GaugeIcon,
+  MailPlusIcon,
+  SettingsIcon,
+  UsersIcon,
+} from "lucide-react"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
+  canAccess,
+  type DashboardSection,
+  type Role,
+} from "@/lib/permissions"
+
+type NavItem = {
+  section: DashboardSection
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
+const NAV: NavItem[] = [
+  { section: "overview", href: "/", label: "Overview", icon: GaugeIcon },
+  {
+    section: "notifications",
+    href: "/notifications",
+    label: "Notifications",
+    icon: BellIcon,
+  },
+  { section: "users", href: "/users", label: "Users", icon: UsersIcon },
+  {
+    section: "invitations",
+    href: "/invitations",
+    label: "Invitations",
+    icon: MailPlusIcon,
+  },
+  {
+    section: "settings",
+    href: "/settings",
+    label: "Settings",
+    icon: SettingsIcon,
+  },
+]
+
+export function AppSidebar({
+  role,
+  user,
+}: {
+  role?: Role
+  user: { name: string; email: string; image: string | null }
+}) {
+  const pathname = usePathname()
+  const items = NAV.filter((item) => canAccess(role, item.section))
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              tooltip="Zyber"
+              render={<Link href="/" />}
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-sm font-semibold">
+                Z
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Zyber</span>
+                <span className="truncate text-xs capitalize text-muted-foreground">
+                  {role ?? "user"} workspace
+                </span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              {items.map((item) => {
+                const active =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href))
+                const Icon = item.icon
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      tooltip={item.label}
+                      isActive={active}
+                      render={<Link href={item.href} />}
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <UserMenuButton user={user} />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  )
+}
+
+function UserMenuButton({
+  user,
+}: {
+  user: { name: string; email: string; image: string | null }
+}) {
+  const { state } = useSidebar()
+  const tooltip = state === "collapsed" ? `${user.name} (${user.email})` : undefined
+
+  return (
+    <SidebarMenuButton size="lg" tooltip={tooltip} className="cursor-default">
+      <Avatar src={user.image} name={user.name} />
+      <div className="grid flex-1 text-left text-sm leading-tight">
+        <span className="truncate font-medium">{user.name}</span>
+        <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+      </div>
+    </SidebarMenuButton>
+  )
+}
+
+function Avatar({ src, name }: { src: string | null; name: string }) {
+  const [errored, setErrored] = useState(false)
+  const initial = name.slice(0, 1).toUpperCase()
+
+  if (!src || errored) {
+    return (
+      <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-medium">
+        {initial}
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={name}
+      width={32}
+      height={32}
+      referrerPolicy="no-referrer"
+      onError={() => setErrored(true)}
+      className="aspect-square size-8 shrink-0 rounded-full object-cover"
+    />
+  )
+}
