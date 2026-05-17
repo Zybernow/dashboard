@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { ClientOnly } from "@/components/client-only"
 import { Header } from "@/components/header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import type { Role } from "@/lib/permissions"
 
@@ -52,9 +53,11 @@ export default async function AppLayout({
           >
             <Header />
           </ClientOnly>
-          <div className="flex-1 px-8 py-8">
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="px-4 py-4 sm:px-8 sm:py-8">
+              <div className="w-full">{children}</div>
+            </div>
+          </ScrollArea>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

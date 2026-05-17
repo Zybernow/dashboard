@@ -184,6 +184,25 @@
     --shadow-2xl: 0px 20px 40px -5px hsl(270.9677 60.7843% 10% / 1.50);
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.75 0.02 308 / 0.4) transparent;
+}
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.02 308 / 0.4);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0.05 308 / 0.6);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
