@@ -30,7 +30,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
     items: [
-      { section: "telemetry", href: "/", label: "Overview", icon: GaugeIcon },
+      { section: "telemetry", href: "/", label: "Telemetry", icon: GaugeIcon },
       { section: "live", href: "/live", label: "Live users", icon: ActivityIcon },
     ],
   },
