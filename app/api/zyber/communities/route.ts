@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
 import { dbProd } from "@/db/prod/drizzle"
-import { communities, communityMembers } from "@/db/prod/schema"
+import { communities, communityMembers, users } from "@/db/prod/schema"
 import type { AdminCommunitiesPage, AdminCommunity } from "@/lib/zyber-types"
 
 const SORT_COLUMNS = {
@@ -15,6 +15,12 @@ const SORT_COLUMNS = {
 export async function GET(req: NextRequest) {
   const auth = await requireSection("communities")
   if (auth.error) return auth.error
+
+  // Maintainers only see communities created by users from their colleges.
+  const maintainerColleges =
+    auth.role === "maintainer" && auth.maintainer.colleges.length > 0
+      ? auth.maintainer.colleges
+      : null
 
   const params = req.nextUrl.searchParams
   const page = Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1)
@@ -39,6 +45,30 @@ export async function GET(req: NextRequest) {
       )!,
     )
   }
+
+  // For maintainers: only communities whose creator belongs to their colleges.
+  // We use a subquery via inArray with usernames from those colleges.
+  let creatorFilter: string[] | null = null
+  if (maintainerColleges) {
+    const creatorRows = await dbProd
+      .select({ username: users.username })
+      .from(users)
+      .where(inArray(users.college, maintainerColleges))
+    creatorFilter = creatorRows.map((r) => r.username)
+    if (creatorFilter.length > 0) {
+      conditions.push(inArray(communities.createdBy, creatorFilter))
+    } else {
+      // No users in these colleges → no communities to show
+      return NextResponse.json({
+        communities: [],
+        total: 0,
+        page: 1,
+        limit: 50,
+        total_pages: 0,
+      } satisfies AdminCommunitiesPage)
+    }
+  }
+
   const whereClause = and(...conditions)
 
   const orderFn = order === "asc" ? asc : desc
@@ -104,6 +134,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireSection("communities")
   if (auth.error) return auth.error
+
+  if (auth.role === "maintainer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
 
   const body = (await req.json().catch(() => null)) as
     | {

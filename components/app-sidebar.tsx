@@ -25,7 +25,7 @@ export function AppSidebar({
   role,
   user,
 }: {
-  role?: Role
+  role?: Role | "maintainer"
   user: { name: string; email: string; image: string | null }
 }) {
   const pathname = usePathname()

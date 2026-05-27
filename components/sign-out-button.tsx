@@ -10,13 +10,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-export function SignOutButton() {
+export function SignOutButton({ isMaintainer }: { isMaintainer?: boolean }) {
   const router = useRouter()
 
   async function handleSignOut() {
-    await authClient.signOut({
-      fetchOptions: { onSuccess: () => router.push("/sign-in") },
-    })
+    if (isMaintainer) {
+      await fetch("/api/auth/maintainer/logout", { method: "POST" })
+      router.push("/sign-in")
+    } else {
+      await authClient.signOut({
+        fetchOptions: { onSuccess: () => router.push("/sign-in") },
+      })
+    }
   }
 
   return (

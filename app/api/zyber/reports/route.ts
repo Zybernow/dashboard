@@ -1,13 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
 import { dbProd } from "@/db/prod/drizzle"
-import { userReports } from "@/db/prod/schema"
+import { userReports, users } from "@/db/prod/schema"
 import type { UserReportsPage } from "@/lib/zyber-types"
 
 export async function GET(req: NextRequest) {
   const auth = await requireSection("reports")
   if (auth.error) return auth.error
+
+  // Maintainers only see reports where the reported user is from their colleges.
+  const maintainerColleges =
+    auth.role === "maintainer" && auth.maintainer.colleges.length > 0
+      ? auth.maintainer.colleges
+      : null
 
   const params = req.nextUrl.searchParams
   const status = params.get("status")?.trim() ?? ""
@@ -17,22 +23,64 @@ export async function GET(req: NextRequest) {
   )
   const offset = Math.max(0, Number.parseInt(params.get("offset") ?? "0", 10) || 0)
 
-  const whereClause = status ? eq(userReports.status, status) : undefined
-
   try {
-    const [rows, totalRow] = await Promise.all([
-      dbProd
-        .select()
-        .from(userReports)
-        .where(whereClause)
-        .orderBy(desc(userReports.createdAt))
-        .limit(limit)
-        .offset(offset),
-      dbProd
-        .select({ count: sql<number>`count(*)::int` })
-        .from(userReports)
-        .where(whereClause),
-    ])
+    let rows, totalRow
+
+    if (maintainerColleges) {
+      // Join with users to filter by reported user's college
+      const reportedUser = users
+      const conditions = []
+      if (status) conditions.push(eq(userReports.status, status))
+      conditions.push(inArray(reportedUser.college, maintainerColleges))
+      const whereClause = and(...conditions)
+
+      ;[rows, totalRow] = await Promise.all([
+        dbProd
+          .select({
+            id: userReports.id,
+            reporterUsername: userReports.reporterUsername,
+            reportedUsername: userReports.reportedUsername,
+            reason: userReports.reason,
+            notes: userReports.notes,
+            status: userReports.status,
+            adminNotes: userReports.adminNotes,
+            createdAt: userReports.createdAt,
+            updatedAt: userReports.updatedAt,
+          })
+          .from(userReports)
+          .innerJoin(
+            reportedUser,
+            eq(reportedUser.username, userReports.reportedUsername),
+          )
+          .where(whereClause)
+          .orderBy(desc(userReports.createdAt))
+          .limit(limit)
+          .offset(offset),
+        dbProd
+          .select({ count: sql<number>`count(*)::int` })
+          .from(userReports)
+          .innerJoin(
+            reportedUser,
+            eq(reportedUser.username, userReports.reportedUsername),
+          )
+          .where(whereClause),
+      ])
+    } else {
+      const whereClause = status ? eq(userReports.status, status) : undefined
+      ;[rows, totalRow] = await Promise.all([
+        dbProd
+          .select()
+          .from(userReports)
+          .where(whereClause)
+          .orderBy(desc(userReports.createdAt))
+          .limit(limit)
+          .offset(offset),
+        dbProd
+          .select({ count: sql<number>`count(*)::int` })
+          .from(userReports)
+          .where(whereClause),
+      ])
+    }
 
     const payload: UserReportsPage = {
       reports: rows.map((r) => ({

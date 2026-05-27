@@ -1,48 +1,95 @@
 import { NextResponse } from "next/server"
-import { asc, eq } from "drizzle-orm"
+import { and, asc, eq, inArray } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
 import { dbProd } from "@/db/prod/drizzle"
 import { users, workEmailReviewRequests } from "@/db/prod/schema"
 import type { WorkEmailReviewRequest } from "@/lib/zyber-types"
 
-// The dashboard's "work-email" section is admin-only (see lib/permissions.ts),
-// so unlike the Go server we don't need to filter by maintainer colleges.
 export async function GET() {
   const auth = await requireSection("work-email")
   if (auth.error) return auth.error
 
+  // Maintainers only see reviews from users at their assigned colleges.
+  const collegeFilter =
+    auth.role === "maintainer" && auth.maintainer.colleges.length > 0
+      ? auth.maintainer.colleges
+      : null
+
   try {
-    const rows = await dbProd
-      .select({
-        id: workEmailReviewRequests.id,
-        username: workEmailReviewRequests.username,
-        workEmail: workEmailReviewRequests.workEmail,
-        domain: workEmailReviewRequests.domain,
-        status: workEmailReviewRequests.status,
-        reviewedBy: workEmailReviewRequests.reviewedBy,
-        reviewedAt: workEmailReviewRequests.reviewedAt,
-        createdAt: workEmailReviewRequests.createdAt,
-        userEmail: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        college: users.college,
-        collegeCourse: users.collegeCourse,
-        graduationYear: users.graduationYear,
-        age: users.age,
-        gender: users.gender,
-        headline: users.headline,
-        bio: users.bio,
-        linkedinUrl: users.linkedinUrl,
-        instagramHandle: users.instagramHandle,
-        twitterHandle: users.twitterHandle,
-        userIsActive: users.isActive,
-        userAccountState: users.accountState,
-        userCreatedAt: users.createdAt,
-      })
-      .from(workEmailReviewRequests)
-      .innerJoin(users, eq(users.username, workEmailReviewRequests.username))
-      .where(eq(workEmailReviewRequests.status, "pending"))
-      .orderBy(asc(workEmailReviewRequests.createdAt))
+    const baseConditions = [eq(workEmailReviewRequests.status, "pending")]
+
+    // When filtering by colleges, we need to join and constrain the college field
+    let rows
+    if (collegeFilter) {
+      rows = await dbProd
+        .select({
+          id: workEmailReviewRequests.id,
+          username: workEmailReviewRequests.username,
+          workEmail: workEmailReviewRequests.workEmail,
+          domain: workEmailReviewRequests.domain,
+          status: workEmailReviewRequests.status,
+          reviewedBy: workEmailReviewRequests.reviewedBy,
+          reviewedAt: workEmailReviewRequests.reviewedAt,
+          createdAt: workEmailReviewRequests.createdAt,
+          userEmail: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          college: users.college,
+          collegeCourse: users.collegeCourse,
+          graduationYear: users.graduationYear,
+          age: users.age,
+          gender: users.gender,
+          headline: users.headline,
+          bio: users.bio,
+          linkedinUrl: users.linkedinUrl,
+          instagramHandle: users.instagramHandle,
+          twitterHandle: users.twitterHandle,
+          userIsActive: users.isActive,
+          userAccountState: users.accountState,
+          userCreatedAt: users.createdAt,
+        })
+        .from(workEmailReviewRequests)
+        .innerJoin(users, eq(users.username, workEmailReviewRequests.username))
+        .where(
+          and(
+            ...baseConditions,
+            inArray(users.college, collegeFilter),
+          ),
+        )
+        .orderBy(asc(workEmailReviewRequests.createdAt))
+    } else {
+      rows = await dbProd
+        .select({
+          id: workEmailReviewRequests.id,
+          username: workEmailReviewRequests.username,
+          workEmail: workEmailReviewRequests.workEmail,
+          domain: workEmailReviewRequests.domain,
+          status: workEmailReviewRequests.status,
+          reviewedBy: workEmailReviewRequests.reviewedBy,
+          reviewedAt: workEmailReviewRequests.reviewedAt,
+          createdAt: workEmailReviewRequests.createdAt,
+          userEmail: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          college: users.college,
+          collegeCourse: users.collegeCourse,
+          graduationYear: users.graduationYear,
+          age: users.age,
+          gender: users.gender,
+          headline: users.headline,
+          bio: users.bio,
+          linkedinUrl: users.linkedinUrl,
+          instagramHandle: users.instagramHandle,
+          twitterHandle: users.twitterHandle,
+          userIsActive: users.isActive,
+          userAccountState: users.accountState,
+          userCreatedAt: users.createdAt,
+        })
+        .from(workEmailReviewRequests)
+        .innerJoin(users, eq(users.username, workEmailReviewRequests.username))
+        .where(and(...baseConditions))
+        .orderBy(asc(workEmailReviewRequests.createdAt))
+    }
 
     const payload: { requests: WorkEmailReviewRequest[] } = {
       requests: rows.map((r) => ({

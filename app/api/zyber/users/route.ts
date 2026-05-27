@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
 import { dbProd } from "@/db/prod/drizzle"
 import { users, userReferralSources } from "@/db/prod/schema"
@@ -15,6 +15,12 @@ const SORT_COLUMNS = {
 export async function GET(req: NextRequest) {
   const auth = await requireSection("users")
   if (auth.error) return auth.error
+
+  // Maintainers can only see users from their assigned colleges.
+  const maintainerColleges =
+    auth.role === "maintainer" && auth.maintainer.colleges.length > 0
+      ? auth.maintainer.colleges
+      : null
 
   const params = req.nextUrl.searchParams
   const page = Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1)
@@ -61,6 +67,11 @@ export async function GET(req: NextRequest) {
   }
   if (onboarding === "yes") conditions.push(eq(users.isOnboardingComplete, true))
   if (onboarding === "no") conditions.push(eq(users.isOnboardingComplete, false))
+
+  // Lock maintainer views to their assigned colleges
+  if (maintainerColleges) {
+    conditions.push(inArray(users.college, maintainerColleges))
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 

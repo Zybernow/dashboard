@@ -3,22 +3,58 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { canAccess, type DashboardSection, type Role } from "@/lib/permissions"
+import { getMaintainerSession, type MaintainerSession } from "@/lib/maintainer-session"
 import { ZyberApiError } from "@/lib/zyber-api"
 
-export async function requireSection(section: DashboardSection) {
+type RequireSectionResult =
+  | {
+      error: NextResponse
+      session?: undefined
+      role?: undefined
+      maintainer?: undefined
+    }
+  | {
+      error?: undefined
+      session: Awaited<ReturnType<typeof auth.api.getSession>>
+      role: Role | undefined
+      maintainer?: undefined
+    }
+  | {
+      error?: undefined
+      session?: undefined
+      role: "maintainer"
+      maintainer: MaintainerSession
+    }
+
+export async function requireSection(
+  section: DashboardSection,
+): Promise<RequireSectionResult> {
+  // 1. Try Better Auth (admin/marketing users)
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) {
-    return {
-      error: NextResponse.json({ error: "unauthorized" }, { status: 401 }),
+  if (session) {
+    const role = session.user.role as Role | undefined
+    if (!canAccess(role, section)) {
+      return {
+        error: NextResponse.json({ error: "forbidden" }, { status: 403 }),
+      }
     }
+    return { session, role }
   }
-  const role = session.user.role as Role | undefined
-  if (!canAccess(role, section)) {
-    return {
-      error: NextResponse.json({ error: "forbidden" }, { status: 403 }),
+
+  // 2. Try maintainer JWT cookie
+  const maintainer = await getMaintainerSession()
+  if (maintainer) {
+    if (!canAccess(maintainer.role, section)) {
+      return {
+        error: NextResponse.json({ error: "forbidden" }, { status: 403 }),
+      }
     }
+    return { role: "maintainer", maintainer }
   }
-  return { session, role }
+
+  return {
+    error: NextResponse.json({ error: "unauthorized" }, { status: 401 }),
+  }
 }
 
 export async function runZyber<T>(

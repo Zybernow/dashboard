@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import { requireSection, runZyber } from "@/lib/api-route"
-import { zyberPost } from "@/lib/zyber-api"
+import { zyberPost, zyberPostWithToken } from "@/lib/zyber-api"
 
 export async function POST(
   req: NextRequest,
@@ -15,10 +16,20 @@ export async function POST(
   const body = (await req.json().catch(() => ({}))) as
     | { note?: string }
     | null
-  return runZyber(() =>
-    zyberPost<unknown>(
-      `/admin/work-email-reviews/${encodeURIComponent(id)}/${action}`,
-      { note: body?.note ?? "" },
-    ),
-  )
+
+  const path = `/admin/work-email-reviews/${encodeURIComponent(id)}/${action}`
+  const payload = { note: body?.note ?? "" }
+
+  // For maintainers, forward their own JWT so the Go backend can record
+  // the reviewer identity correctly (it uses the token's username claim).
+  if (auth.role === "maintainer") {
+    const cookieStore = await cookies()
+    const maintainerToken = cookieStore.get("maintainer_token")?.value
+    if (!maintainerToken) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+    }
+    return runZyber(() => zyberPostWithToken<unknown>(path, maintainerToken, payload))
+  }
+
+  return runZyber(() => zyberPost<unknown>(path, payload))
 }

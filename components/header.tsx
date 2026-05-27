@@ -16,7 +16,7 @@ import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { findNavMeta } from "@/lib/nav"
 
-export function Header() {
+export function Header({ isMaintainer }: { isMaintainer?: boolean }) {
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
       <div className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export function Header() {
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <SignOutButton />
+        <SignOutButton isMaintainer={isMaintainer} />
       </div>
     </header>
   )

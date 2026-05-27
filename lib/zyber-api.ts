@@ -149,3 +149,42 @@ export function zyberPut<T>(path: string, body?: unknown, query?: Record<string,
 export function zyberDelete<T>(path: string, query?: Record<string, unknown>) {
   return request<T>("DELETE", path, { query })
 }
+
+// Variant that uses a caller-supplied token (e.g. a maintainer's own JWT)
+// instead of the cached super-admin token.
+export async function zyberPostWithToken<T>(
+  path: string,
+  token: string,
+  body?: unknown,
+): Promise<T> {
+  const url = buildUrl(path)
+  const res = await fetch(url, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body ?? {}),
+  })
+
+  const text = await res.text()
+  let payload: unknown = null
+  if (text) {
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      payload = text
+    }
+  }
+
+  if (!res.ok) {
+    const message =
+      (payload && typeof payload === "object" && "error" in payload
+        ? String((payload as { error: unknown }).error)
+        : null) ?? `Zyber API POST ${path} failed (${res.status})`
+    throw new ZyberApiError(res.status, message, payload)
+  }
+
+  return payload as T
+}

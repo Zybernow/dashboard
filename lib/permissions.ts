@@ -32,6 +32,14 @@ const ALL_ADMIN: DashboardSection[] = [
   "sql-explorer",
 ]
 
+const MAINTAINER_SECTIONS: DashboardSection[] = [
+  "work-email",
+  "users",
+  "communities",
+  "events",
+  "reports",
+]
+
 const ACCESS: Record<Role, DashboardSection[]> = {
   admin: ALL_ADMIN,
   marketing: ["telemetry"],
@@ -39,20 +47,22 @@ const ACCESS: Record<Role, DashboardSection[]> = {
 }
 
 export function canAccess(
-  role: Role | string | null | undefined,
+  role: Role | "maintainer" | string | null | undefined,
   section: DashboardSection,
 ): boolean {
   if (!role) return false
+  if (role === "maintainer") return MAINTAINER_SECTIONS.includes(section)
   const allowed = ACCESS[role as Role]
   return Array.isArray(allowed) && allowed.includes(section)
 }
 
 export function landingSectionFor(
-  role: Role | string | null | undefined,
+  role: Role | "maintainer" | string | null | undefined,
 ): DashboardSection | null {
   if (!role) return null
   if (role === "admin") return "telemetry"
   if (role === "marketing") return "telemetry"
+  if (role === "maintainer") return "work-email"
   return null
 }
 

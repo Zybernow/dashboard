@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
+import { getMaintainerSession } from "@/lib/maintainer-session"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ClientOnly } from "@/components/client-only"
 import { Header } from "@/components/header"
@@ -14,10 +15,31 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Try Better Auth session first (admin/marketing users)
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect("/sign-in")
 
-  const role = session.user.role as Role | undefined
+  let role: Role | "maintainer" | undefined
+  let user: { name: string; email: string; image: string | null }
+
+  if (session) {
+    role = session.user.role as Role | undefined
+    user = {
+      name: session.user.name,
+      email: session.user.email,
+      image: session.user.image ?? null,
+    }
+  } else {
+    // Fallback: maintainer JWT cookie
+    const maintainer = await getMaintainerSession()
+    if (!maintainer) redirect("/sign-in")
+
+    role = "maintainer"
+    user = {
+      name: maintainer.username,
+      email: "",
+      image: null,
+    }
+  }
 
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
@@ -33,14 +55,7 @@ export default async function AppLayout({
             />
           }
         >
-          <AppSidebar
-            role={role}
-            user={{
-              name: session.user.name,
-              email: session.user.email,
-              image: session.user.image ?? null,
-            }}
-          />
+          <AppSidebar role={role} user={user} />
         </ClientOnly>
         <SidebarInset>
           <ClientOnly
@@ -51,7 +66,7 @@ export default async function AppLayout({
               />
             }
           >
-            <Header />
+            <Header isMaintainer={role === "maintainer"} />
           </ClientOnly>
           <ScrollArea className="flex-1">
             <div className="px-4 py-4 sm:px-8 sm:py-8">

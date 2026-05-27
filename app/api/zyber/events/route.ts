@@ -1,11 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
 import { dbProd } from "@/db/prod/drizzle"
 import {
   communities,
   communityEvents,
   eventAttendees,
+  users,
 } from "@/db/prod/schema"
 import type { AdminEvent, AdminEventsPage } from "@/lib/zyber-types"
 
@@ -19,6 +20,12 @@ const SORT_COLUMNS = {
 export async function GET(req: NextRequest) {
   const auth = await requireSection("events")
   if (auth.error) return auth.error
+
+  // Maintainers only see events created by users from their colleges.
+  const maintainerColleges =
+    auth.role === "maintainer" && auth.maintainer.colleges.length > 0
+      ? auth.maintainer.colleges
+      : null
 
   const params = req.nextUrl.searchParams
   const page = Math.max(1, Number.parseInt(params.get("page") ?? "1", 10) || 1)
@@ -34,6 +41,25 @@ export async function GET(req: NextRequest) {
 
   const attendeeCount = sql<number>`(select count(*)::int from ${eventAttendees} where ${eventAttendees.eventId} = ${communityEvents.id})`
 
+  // Resolve creator usernames for maintainer college filter
+  let creatorFilter: string[] | null = null
+  if (maintainerColleges) {
+    const creatorRows = await dbProd
+      .select({ username: users.username })
+      .from(users)
+      .where(inArray(users.college, maintainerColleges))
+    creatorFilter = creatorRows.map((r) => r.username)
+    if (creatorFilter.length === 0) {
+      return NextResponse.json({
+        events: [],
+        total: 0,
+        page: 1,
+        limit: 50,
+        total_pages: 0,
+      } satisfies AdminEventsPage)
+    }
+  }
+
   const conditions = []
   if (communityId > 0) {
     conditions.push(eq(communityEvents.communityId, communityId))
@@ -47,6 +73,9 @@ export async function GET(req: NextRequest) {
         ilike(communityEvents.createdBy, pat),
       )!,
     )
+  }
+  if (creatorFilter) {
+    conditions.push(inArray(communityEvents.createdBy, creatorFilter))
   }
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
@@ -121,6 +150,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireSection("events")
   if (auth.error) return auth.error
+
+  if (auth.role === "maintainer") {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
 
   const body = (await req.json().catch(() => null)) as
     | {
