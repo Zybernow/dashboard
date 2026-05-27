@@ -14,6 +14,7 @@ export type DashboardSection =
   | "maintainers"
   | "version"
   | "invitations"
+  | "sql-explorer"
 
 const ALL_ADMIN: DashboardSection[] = [
   "telemetry",
@@ -28,6 +29,7 @@ const ALL_ADMIN: DashboardSection[] = [
   "maintainers",
   "version",
   "invitations",
+  "sql-explorer",
 ]
 
 const ACCESS: Record<Role, DashboardSection[]> = {

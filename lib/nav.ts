@@ -1,6 +1,7 @@
 import {
   ActivityIcon,
   CalendarIcon,
+  DatabaseIcon,
   FlagIcon,
   GaugeIcon,
   HardDriveIcon,
@@ -86,6 +87,12 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/invitations",
         label: "Invitations",
         icon: MailPlusIcon,
+      },
+      {
+        section: "sql-explorer",
+        href: "/sql-explorer",
+        label: "SQL Explorer",
+        icon: DatabaseIcon,
       },
     ],
   },
