@@ -1,7 +1,14 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { BadgeCheckIcon, BanIcon, CheckIcon, Trash2Icon } from "lucide-react"
+import {
+  BadgeCheckIcon,
+  BanIcon,
+  CheckIcon,
+  ShieldCheckIcon,
+  ShieldXIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
@@ -13,7 +20,7 @@ import {
 import type { AdminUser } from "@/lib/zyber-types"
 
 export type UserActionInput = {
-  action: "disable" | "enable" | "delete"
+  action: "disable" | "enable" | "delete" | "ban" | "unban"
   email: string
   username: string
 }
@@ -217,6 +224,9 @@ export function buildUserColumns(ctx: ColumnContext): ColumnDef<AdminUser>[] {
         const toggleAction = u.is_active ? "disable" : "enable"
         const ToggleIcon = u.is_active ? BanIcon : CheckIcon
         const toggleLabel = u.is_active ? "Disable user" : "Enable user"
+        const banAction = u.is_banned ? "unban" : "ban"
+        const BanToggleIcon = u.is_banned ? ShieldCheckIcon : ShieldXIcon
+        const banLabel = u.is_banned ? "Unban user" : "Ban user"
         return (
           <div className="flex justify-end gap-1">
             <Tooltip>
@@ -240,6 +250,33 @@ export function buildUserColumns(ctx: ColumnContext): ColumnDef<AdminUser>[] {
                 }
               />
               <TooltipContent>{toggleLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={banLabel}
+                    disabled={ctx.isMutating}
+                    className={
+                      u.is_banned
+                        ? undefined
+                        : "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    }
+                    onClick={() =>
+                      ctx.onAction({
+                        action: banAction,
+                        email: u.email,
+                        username: u.username,
+                      })
+                    }
+                  >
+                    <BanToggleIcon />
+                  </Button>
+                }
+              />
+              <TooltipContent>{banLabel}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger

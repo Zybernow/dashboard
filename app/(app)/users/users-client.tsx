@@ -183,9 +183,17 @@ export function UsersClient() {
     placeholderData: (prev) => prev,
   })
 
+  const ACTION_LABELS: Record<string, string> = {
+    disable: "User disabled",
+    enable: "User enabled",
+    delete: "User deleted",
+    ban: "User banned",
+    unban: "User unbanned",
+  }
+
   const action = useMutation({
     mutationFn: (input: {
-      action: "disable" | "enable" | "delete"
+      action: "disable" | "enable" | "delete" | "ban" | "unban"
       email: string
       username: string
     }) =>
@@ -194,15 +202,15 @@ export function UsersClient() {
         body: JSON.stringify({ action: input.action, email: input.email }),
       }),
     onSuccess: (_, input) => {
-      toast.success(`User ${input.action}d`)
+      toast.success(ACTION_LABELS[input.action] ?? `User ${input.action}d`)
       qc.invalidateQueries({ queryKey: ["zyber", "users"] })
-      pendingDelete?.resolve()
       setPendingDelete(null)
+      setPendingBan(null)
     },
     onError: (err: Error) => {
       toast.error(err.message)
-      pendingDelete?.reject()
       setPendingDelete(null)
+      setPendingBan(null)
     },
   })
 
@@ -213,19 +221,27 @@ export function UsersClient() {
     reject: () => void
   } | null>(null)
 
+  const [pendingBan, setPendingBan] = useState<{
+    email: string
+    username: string
+  } | null>(null)
+
   const handleAction = (input: {
-    action: "disable" | "enable" | "delete"
+    action: "disable" | "enable" | "delete" | "ban" | "unban"
     email: string
     username: string
   }) => {
     if (input.action === "delete") {
-      // Defer; the dialog confirms.
       setPendingDelete({
         email: input.email,
         username: input.username,
         resolve: () => {},
         reject: () => {},
       })
+      return
+    }
+    if (input.action === "ban") {
+      setPendingBan({ email: input.email, username: input.username })
       return
     }
     action.mutate(input)
@@ -435,6 +451,22 @@ export function UsersClient() {
           isPending={action.isPending}
         />
       ) : null}
+
+      {pendingBan ? (
+        <BanUserDialog
+          email={pendingBan.email}
+          username={pendingBan.username}
+          onCancel={() => setPendingBan(null)}
+          onConfirm={() => {
+            action.mutate({
+              action: "ban",
+              email: pendingBan.email,
+              username: pendingBan.username,
+            })
+          }}
+          isPending={action.isPending}
+        />
+      ) : null}
     </div>
   )
 }
@@ -472,6 +504,46 @@ function DeleteUserDialog({
             disabled={isPending}
           >
             Delete account
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BanUserDialog({
+  email,
+  username,
+  onCancel,
+  onConfirm,
+  isPending,
+}: {
+  email: string
+  username: string
+  onCancel: () => void
+  onConfirm: () => void
+  isPending: boolean
+}) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Ban @{username}?</DialogTitle>
+          <DialogDescription>
+            This will ban {email} and block them from accessing the app. You can
+            unban them at any time.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onCancel} disabled={isPending}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isPending}
+          >
+            Ban account
           </Button>
         </DialogFooter>
       </DialogContent>

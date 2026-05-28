@@ -6,6 +6,8 @@ const ACTIONS = {
   disable: "/users/disable",
   enable: "/users/enable",
   delete: "/users/delete",
+  ban: "/users/ban",
+  unban: "/users/unban",
 } as const
 
 type Action = keyof typeof ACTIONS
