@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         total_seconds: sql<number>`${dailyCallStats.totalSeconds}::bigint`,
       })
       .from(dailyCallStats)
-      .where(sql`${dailyCallStats.date} >= current_date - ${days - 1}`)
+      .where(sql`${dailyCallStats.date} >= current_date - ${sql.raw(String(days - 1))}::int`)
       .orderBy(sql`${dailyCallStats.date} asc`)
 
     const payload: DailyCallStatsResponse = {

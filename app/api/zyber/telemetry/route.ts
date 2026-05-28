@@ -8,6 +8,7 @@ import {
   communityMembers,
   dailyCallStats,
 } from "@/db/prod/schema"
+import { getActiveCallCount, getOnlineUserCount } from "@/lib/redis"
 import type { Telemetry } from "@/lib/zyber-types"
 
 export async function GET() {
@@ -15,7 +16,8 @@ export async function GET() {
   if (auth.error) return auth.error
 
   try {
-    const [userAgg, communityAgg, memberAgg, callsAgg] = await Promise.all([
+    const [userAgg, communityAgg, memberAgg, callsAgg, liveUsers, activeCalls] =
+      await Promise.all([
       dbProd
         .select({
           total: sql<number>`count(*)::int`,
@@ -37,6 +39,8 @@ export async function GET() {
           totalSeconds: sql<number>`coalesce(sum(${dailyCallStats.totalSeconds}), 0)::bigint`,
         })
         .from(dailyCallStats),
+      getOnlineUserCount(),
+      getActiveCallCount(),
     ])
 
     const u = userAgg[0]
@@ -45,7 +49,7 @@ export async function GET() {
         total: u.total,
         active: u.active,
         disabled: u.disabled,
-        live: 0,
+        live: liveUsers,
         new_24h: u.new_24h,
         new_7d: u.new_7d,
         new_30d: u.new_30d,
@@ -55,7 +59,7 @@ export async function GET() {
         total_members: memberAgg[0].total,
       },
       calls: {
-        active: 0,
+        active: activeCalls,
         total_seconds: Number(callsAgg[0].totalSeconds),
       },
     }
