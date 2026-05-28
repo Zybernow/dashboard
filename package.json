@@ -10,6 +10,7 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
+    "migrate": "drizzle-kit migrate --config=drizzle.dashboard.config.ts",
     "studio:dashboard": "drizzle-kit studio --config=drizzle.dashboard.config.ts",
     "studio:prod": "drizzle-kit studio --config=drizzle.prod.config.ts"
   },
