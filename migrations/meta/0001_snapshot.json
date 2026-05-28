@@ -144,7 +144,7 @@
         },
         "role": {
           "name": "role",
-          "type": "user_role",
+          "type": "admin_user_role",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
@@ -414,7 +414,7 @@
         },
         "role": {
           "name": "role",
-          "type": "user_role",
+          "type": "admin_user_role",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
@@ -517,7 +517,7 @@
       ]
     },
     "public.user_role": {
-      "name": "user_role",
+      "name": "admin_user_role",
       "schema": "public",
       "values": [
         "admin",

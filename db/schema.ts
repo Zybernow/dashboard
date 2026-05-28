@@ -8,7 +8,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-export const userRole = pgEnum("user_role", ["admin", "marketing", "user"]);
+export const userRole = pgEnum("admin_user_role", ["admin", "marketing", "user"]);
 export const invitationStatus = pgEnum("invitation_status", [
   "pending",
   "accepted",
