@@ -137,37 +137,6 @@ export function TelemetryDashboard() {
         data={engagement.data?.verified}
         isLoading={engagement.isLoading}
       />
-      <WindowedSection
-        title="Matches"
-        description="Mutual right-swipes"
-        data={engagement.data?.matches}
-        isLoading={engagement.isLoading}
-      />
-      <WindowedSection
-        title="Swipes"
-        description="Right-swipes initiated (left-swipes not tracked)"
-        data={engagement.data?.swipes}
-        isLoading={engagement.isLoading}
-      />
-      <WindowedSection
-        title="Active users"
-        description="Firebase Analytics"
-        data={firebase.data?.active_users}
-        isLoading={firebase.isLoading}
-      />
-      <WindowedSection
-        title="Sessions"
-        description="Firebase Analytics"
-        data={firebase.data?.sessions}
-        isLoading={firebase.isLoading}
-      />
-      <WindowedSection
-        title="Avg session duration (minutes)"
-        description="Firebase Analytics"
-        data={firebase.data?.avg_session_duration_seconds}
-        isLoading={firebase.isLoading}
-        format={(v) => Math.round(v / 60)}
-      />
       <FirebaseEventsSection
         data={firebase.data?.events}
         isLoading={firebase.isLoading}
