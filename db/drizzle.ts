@@ -8,7 +8,7 @@ const globalForDb = globalThis as unknown as {
   pgClient?: ReturnType<typeof postgres>;
 };
 
-const client =
+export const client =
   globalForDb.pgClient ??
   postgres(process.env.DATABASE_URL!, {
     max: 10,

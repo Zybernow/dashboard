@@ -5,8 +5,8 @@
  * database engine itself will reject any DML (INSERT / UPDATE / DELETE / DROP /
  * TRUNCATE …) — regardless of what SQL text is passed in.
  *
- * To swap to a dedicated read-only database user, set PROD_DATABASE_URL_READONLY
- * in .env; otherwise it falls back to PROD_DATABASE_URL with the same credentials
+ * To swap to a dedicated read-only database user, set DATABASE_URL_READONLY
+ * in .env; otherwise it falls back to DATABASE_URL with the same credentials
  * but the READ ONLY transaction guard is still active.
  */
 
@@ -16,11 +16,11 @@ import postgres from "postgres"
 config({ path: ".env" })
 
 const url =
-  process.env.PROD_DATABASE_URL_READONLY ?? process.env.PROD_DATABASE_URL
+  process.env.DATABASE_URL_READONLY ?? process.env.DATABASE_URL
 
 if (!url) {
   throw new Error(
-    "Neither PROD_DATABASE_URL_READONLY nor PROD_DATABASE_URL is set.",
+    "Neither DATABASE_URL_READONLY nor DATABASE_URL is set.",
   )
 }
 
