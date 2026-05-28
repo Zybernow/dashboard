@@ -107,15 +107,16 @@ export async function GET() {
       setWindow(avgSessionDuration, rangeName, Math.round(avgDur ?? 0))
     }
 
-    // Events response: one row per (date range × event name). dimensionValues
-    // order matches the request — [dateRange, eventName].
+    // Events response: one row per (event name × date range). When multiple
+    // dateRanges are supplied, GA4 appends an implicit `dateRange` dimension
+    // *after* the explicit dimensions — so order is [eventName, dateRange].
     const events: Record<string, WindowedCount> = {}
     for (const name of TRACKED_EVENTS) {
       events[name] = emptyWindow()
     }
     for (const row of eventsResp.rows ?? []) {
-      const rangeName = row.dimensionValues?.[0]?.value as RangeKey | undefined
-      const eventName = row.dimensionValues?.[1]?.value
+      const eventName = row.dimensionValues?.[0]?.value
+      const rangeName = row.dimensionValues?.[1]?.value as RangeKey | undefined
       const count = Number(row.metricValues?.[0]?.value ?? 0)
       if (!rangeName || !eventName || !events[eventName]) continue
       setWindow(events[eventName], rangeName, Math.round(count))
