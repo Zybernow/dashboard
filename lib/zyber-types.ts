@@ -48,6 +48,13 @@ export type EngagementMetrics = {
   avg_engagement_seconds: WindowedCount
 }
 
+export type FirebaseMetrics = {
+  sessions: WindowedCount
+  active_users: WindowedCount
+  avg_session_duration_seconds: WindowedCount
+  events: Record<string, WindowedCount>
+}
+
 export type AdminUser = {
   username: string
   email: string

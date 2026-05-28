@@ -15,6 +15,7 @@ import { apiFetch } from "@/lib/fetcher"
 import type {
   DailyCallStatsResponse,
   EngagementMetrics,
+  FirebaseMetrics,
   ReferralAnalytics,
   Telemetry,
   WindowedCount,
@@ -63,6 +64,14 @@ export function TelemetryDashboard() {
     queryFn: () =>
       apiFetch<EngagementMetrics>("/api/zyber/analytics/engagement"),
     refetchInterval: 30_000,
+  })
+
+  const firebase = useQuery({
+    queryKey: ["zyber", "firebase"],
+    queryFn: () =>
+      apiFetch<FirebaseMetrics>("/api/zyber/analytics/firebase"),
+    // GA4 data is delayed up to ~24h and rate-limited; no point polling.
+    staleTime: 60 * 60 * 1000,
   })
 
   return (
@@ -141,17 +150,27 @@ export function TelemetryDashboard() {
         isLoading={engagement.isLoading}
       />
       <WindowedSection
-        title="Sessions"
-        description="Unique sessions in analytics_events"
-        data={engagement.data?.sessions}
-        isLoading={engagement.isLoading}
+        title="Active users"
+        description="Firebase Analytics"
+        data={firebase.data?.active_users}
+        isLoading={firebase.isLoading}
       />
       <WindowedSection
-        title="Avg engagement (minutes)"
-        description="Average time per session"
-        data={engagement.data?.avg_engagement_seconds}
-        isLoading={engagement.isLoading}
+        title="Sessions"
+        description="Firebase Analytics"
+        data={firebase.data?.sessions}
+        isLoading={firebase.isLoading}
+      />
+      <WindowedSection
+        title="Avg session duration (minutes)"
+        description="Firebase Analytics"
+        data={firebase.data?.avg_session_duration_seconds}
+        isLoading={firebase.isLoading}
         format={(v) => Math.round(v / 60)}
+      />
+      <FirebaseEventsSection
+        data={firebase.data?.events}
+        isLoading={firebase.isLoading}
       />
 
       <section>
@@ -340,6 +359,72 @@ function WindowedSection({
           isLoading={isLoading}
         />
       </div>
+    </section>
+  )
+}
+
+function FirebaseEventsSection({
+  data,
+  isLoading,
+}: {
+  data: Record<string, WindowedCount> | undefined
+  isLoading: boolean
+}) {
+  const entries = data ? Object.entries(data) : []
+  return (
+    <section>
+      <h2 className="mb-1 text-sm font-medium text-muted-foreground">
+        Firebase event counts
+      </h2>
+      <p className="mb-3 text-xs text-muted-foreground/70">
+        Total fires per event, across all users.
+      </p>
+      <Card>
+        <CardContent className="overflow-x-auto px-0">
+          {isLoading ? (
+            <div className="space-y-2 px-6 py-2">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="px-6 py-6 text-sm text-muted-foreground">
+              No event data.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-xs text-muted-foreground">
+                  <th className="px-6 py-2 text-left font-medium">Event</th>
+                  <th className="px-3 py-2 text-right font-medium">365d</th>
+                  <th className="px-3 py-2 text-right font-medium">24h</th>
+                  <th className="px-3 py-2 text-right font-medium">7d</th>
+                  <th className="px-6 py-2 text-right font-medium">30d</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(([name, w]) => (
+                  <tr key={name} className="border-b last:border-0">
+                    <td className="px-6 py-2 font-medium">{name}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {w.total.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {w.last_24h.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {w.last_7d.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-2 text-right tabular-nums">
+                      {w.last_30d.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
     </section>
   )
 }
