@@ -168,3 +168,17 @@ export const dailyCallStats = pgTable("daily_call_stats", {
   date: date("date").primaryKey(),
   totalSeconds: bigint("total_seconds", { mode: "number" }).notNull(),
 })
+
+export const requests = pgTable("requests", {
+  user1: text("user1").notNull(),
+  user2: text("user2").notNull(),
+  intent1: boolean("intent1").notNull(),
+  intent2: boolean("intent2").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+})
+
+export const analyticsEvents = pgTable("analytics_events", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  sessionId: text("session_id").notNull(),
+  serverTs: timestamp("server_ts", { withTimezone: true }).notNull(),
+})

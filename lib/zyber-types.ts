@@ -32,6 +32,22 @@ export type ReferralAnalytics = {
   sources: Record<string, number>
 }
 
+export type WindowedCount = {
+  total: number
+  last_24h: number
+  last_7d: number
+  last_30d: number
+}
+
+export type EngagementMetrics = {
+  onboarded: WindowedCount
+  verified: WindowedCount
+  matches: WindowedCount
+  swipes: WindowedCount
+  sessions: WindowedCount
+  avg_engagement_seconds: WindowedCount
+}
+
 export type AdminUser = {
   username: string
   email: string

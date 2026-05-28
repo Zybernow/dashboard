@@ -14,8 +14,10 @@ import {
 import { apiFetch } from "@/lib/fetcher"
 import type {
   DailyCallStatsResponse,
+  EngagementMetrics,
   ReferralAnalytics,
   Telemetry,
+  WindowedCount,
 } from "@/lib/zyber-types"
 import {
   Card,
@@ -54,6 +56,13 @@ export function TelemetryDashboard() {
     queryKey: ["zyber", "referrals"],
     queryFn: () =>
       apiFetch<ReferralAnalytics>("/api/zyber/analytics/referral-sources"),
+  })
+
+  const engagement = useQuery({
+    queryKey: ["zyber", "engagement"],
+    queryFn: () =>
+      apiFetch<EngagementMetrics>("/api/zyber/analytics/engagement"),
+    refetchInterval: 30_000,
   })
 
   return (
@@ -107,6 +116,43 @@ export function TelemetryDashboard() {
           />
         </div>
       </section>
+
+      <WindowedSection
+        title="Onboarded users"
+        data={engagement.data?.onboarded}
+        isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Verified users"
+        description="Work email verified"
+        data={engagement.data?.verified}
+        isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Matches"
+        description="Mutual right-swipes"
+        data={engagement.data?.matches}
+        isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Swipes"
+        description="Right-swipes initiated (left-swipes not tracked)"
+        data={engagement.data?.swipes}
+        isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Sessions"
+        description="Unique sessions in analytics_events"
+        data={engagement.data?.sessions}
+        isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Avg engagement (minutes)"
+        description="Average time per session"
+        data={engagement.data?.avg_engagement_seconds}
+        isLoading={engagement.isLoading}
+        format={(v) => Math.round(v / 60)}
+      />
 
       <section>
         <h2 className="mb-3 text-sm font-medium text-muted-foreground">
@@ -244,6 +290,57 @@ function StatCard({
         </CardTitle>
       </CardHeader>
     </Card>
+  )
+}
+
+function WindowedSection({
+  title,
+  description,
+  data,
+  isLoading,
+  format,
+}: {
+  title: string
+  description?: string
+  data: WindowedCount | undefined
+  isLoading: boolean
+  format?: (v: number) => number
+}) {
+  const apply = (v: number | undefined) =>
+    v === undefined ? undefined : format ? format(v) : v
+  return (
+    <section>
+      <h2 className="mb-1 text-sm font-medium text-muted-foreground">
+        {title}
+      </h2>
+      {description ? (
+        <p className="mb-3 text-xs text-muted-foreground/70">{description}</p>
+      ) : (
+        <div className="mb-3" />
+      )}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <StatCard
+          label="All-time"
+          value={apply(data?.total)}
+          isLoading={isLoading}
+        />
+        <StatCard
+          label="Last 24h"
+          value={apply(data?.last_24h)}
+          isLoading={isLoading}
+        />
+        <StatCard
+          label="Last 7d"
+          value={apply(data?.last_7d)}
+          isLoading={isLoading}
+        />
+        <StatCard
+          label="Last 30d"
+          value={apply(data?.last_30d)}
+          isLoading={isLoading}
+        />
+      </div>
+    </section>
   )
 }
 
