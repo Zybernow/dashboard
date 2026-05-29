@@ -18,6 +18,7 @@ import type {
   FirebaseMetrics,
   MatchLeaderboard,
   MatchPairRow,
+  MatchSort,
   ReferralAnalytics,
   Telemetry,
   WindowedCount,
@@ -76,11 +77,15 @@ export function TelemetryDashboard() {
     staleTime: 60 * 60 * 1000,
   })
 
+  const [matchSort, setMatchSort] = useState<MatchSort>("messages")
+
   const matches = useQuery({
-    queryKey: ["zyber", "matches"],
+    queryKey: ["zyber", "matches", matchSort],
     queryFn: () =>
-      apiFetch<MatchLeaderboard>("/api/zyber/analytics/matches"),
-    refetchInterval: 30_000,
+      apiFetch<MatchLeaderboard>(
+        `/api/zyber/analytics/matches?sort=${matchSort}`,
+      ),
+    placeholderData: (prev) => prev,
   })
 
   return (
@@ -149,6 +154,8 @@ export function TelemetryDashboard() {
       <MatchesLeaderboard
         data={matches.data?.pairs}
         isLoading={matches.isLoading}
+        sort={matchSort}
+        onSortChange={setMatchSort}
       />
       <FirebaseEventsSection
         data={firebase.data?.events}
@@ -443,22 +450,52 @@ function formatDate(value: string | null): string {
   })
 }
 
+const MATCH_SORT_OPTIONS: { value: MatchSort; label: string }[] = [
+  { value: "messages", label: "Messages" },
+  { value: "calls", label: "Calls" },
+  { value: "call_seconds", label: "Call time" },
+  { value: "lifespan", label: "Lifespan" },
+  { value: "last_active", label: "Last active" },
+]
+
 function MatchesLeaderboard({
   data,
   isLoading,
+  sort,
+  onSortChange,
 }: {
   data: MatchPairRow[] | undefined
   isLoading: boolean
+  sort: MatchSort
+  onSortChange: (value: MatchSort) => void
 }) {
   const rows = data ?? []
   return (
     <section>
-      <h2 className="mb-1 text-sm font-medium text-muted-foreground">
-        Most active matches
-      </h2>
+      <div className="mb-1 flex items-center justify-between gap-4">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Most active matches
+        </h2>
+        <Select
+          value={sort}
+          onValueChange={(v) => v && onSortChange(v as MatchSort)}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {MATCH_SORT_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <p className="mb-3 text-xs text-muted-foreground/70">
-        Matched pairs ranked by chat activity. Engagement is activity-based
-        (messages, calls, conversation lifespan) — not true time spent together.
+        Top matched pairs ranked by the selected metric. Engagement is
+        activity-based (messages, calls, conversation lifespan) — not true time
+        spent together.
       </p>
       <Card>
         <CardContent className="overflow-x-auto px-0">

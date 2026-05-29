@@ -67,9 +67,17 @@ export type MatchPairRow = {
   convo_started_at: string | null
 }
 
+export type MatchSort =
+  | "messages"
+  | "calls"
+  | "call_seconds"
+  | "lifespan"
+  | "last_active"
+
 export type MatchLeaderboard = {
   pairs: MatchPairRow[]
   limit: number
+  sort: MatchSort
 }
 
 export type AdminUser = {
