@@ -1,11 +1,8 @@
-﻿import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-
-import { db } from "@/db/drizzle"
+﻿import { redirect } from "next/navigation"
 import { desc } from "drizzle-orm"
+import { db } from "@/db/drizzle"
 import { invitation } from "@/db/schema"
-
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { canAccess, type Role } from "@/lib/permissions"
 
 import { InviteForm } from "./invite-form"

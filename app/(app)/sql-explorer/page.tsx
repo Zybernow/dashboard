@@ -1,7 +1,5 @@
-﻿import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-
-import { auth } from "@/lib/auth"
+﻿import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
 import { canAccess, type Role } from "@/lib/permissions"
 
 import { SqlExplorerClient } from "./sql-client"
