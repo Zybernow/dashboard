@@ -25,20 +25,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-const fontSans = Space_Grotesk({
+// Single load with all three variable bindings — avoids fetching the same
+// font file three times when --font-sans, --font-serif, and --font-mono all
+// resolve to Space Grotesk.
+const font = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-sans",
-});
-
-const fontSerif = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-serif",
-});
-
-const fontMono = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-mono",
-});
+})
 
 export default function RootLayout({
   children,
@@ -50,7 +43,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${font.variable} antialiased`}>
         <ThemeProvider>
           <QueryProvider>
             {children}

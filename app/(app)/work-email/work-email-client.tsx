@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
 import { TrashIcon } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { apiFetch } from "@/lib/fetcher"
 import type { WorkEmailReviewRequest } from "@/lib/zyber-types"
 import { Badge } from "@/components/ui/badge"
@@ -48,12 +50,16 @@ export function WorkEmailClient() {
       <TabsList>
         <TabsTrigger value="reviews">Reviews</TabsTrigger>
         <TabsTrigger value="domains">Allowlist</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       <TabsContent value="reviews" className="pt-4">
         <ReviewsTable />
       </TabsContent>
       <TabsContent value="domains" className="pt-4">
         <DomainAllowlist />
+      </TabsContent>
+      <TabsContent value="settings" className="pt-4">
+        <WorkEmailSettings />
       </TabsContent>
     </Tabs>
   )
@@ -317,6 +323,63 @@ function DomainAllowlist() {
             {data.domains.length} domain{data.domains.length === 1 ? "" : "s"}
           </Badge>
         ) : null}
+      </CardContent>
+    </Card>
+  )
+}
+
+function WorkEmailSettings() {
+  const qc = useQueryClient()
+  const { data, isLoading } = useQuery({
+    queryKey: ["zyber", "work-email-settings"],
+    queryFn: () =>
+      apiFetch<{ open: boolean }>("/api/zyber/work-email-settings"),
+  })
+
+  const toggle = useMutation({
+    mutationFn: (open: boolean) =>
+      apiFetch<{ open: boolean }>("/api/zyber/work-email-settings", {
+        method: "PUT",
+        body: JSON.stringify({ open }),
+      }),
+    onSuccess: (res) => {
+      toast.success(
+        res.open
+          ? "Open for All enabled — any email accepted as work email"
+          : "Open for All disabled — allowlist / review required",
+      )
+      qc.invalidateQueries({ queryKey: ["zyber", "work-email-settings"] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Work email settings</CardTitle>
+        <CardDescription>
+          Global controls for the work email verification flow.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <Label className="text-base">Open for All</Label>
+            <p className="text-sm text-muted-foreground">
+              When enabled, any email address is accepted as a work email without
+              domain review. Disabling restores the allowlist / review flow.
+            </p>
+          </div>
+          {isLoading ? (
+            <Skeleton className="h-6 w-11 rounded-full" />
+          ) : (
+            <Switch
+              checked={data?.open ?? false}
+              disabled={toggle.isPending}
+              onCheckedChange={(checked) => toggle.mutate(checked)}
+            />
+          )}
+        </div>
       </CardContent>
     </Card>
   )

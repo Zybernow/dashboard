@@ -156,6 +156,31 @@ export const appVersionConfig = pgTable("app_version_config", {
   workEmailOpen: boolean("work_email_open").notNull(),
 })
 
+export const announcements = pgTable("announcements", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  imageUrl: text("image_url").notNull(),
+  buttonText: text("button_text").notNull(),
+  buttonAction: text("button_action").notNull(),
+  isActive: boolean("is_active").notNull(),
+  startAt: timestamp("start_at", { withTimezone: true }),
+  endAt: timestamp("end_at", { withTimezone: true }),
+  priceInr: integer("price_inr").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+})
+
+export const supportStaff = pgTable("support_staff", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+  username: text("username").notNull(),
+  displayName: text("display_name").notNull(),
+  isActive: boolean("is_active").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+})
+
 export const userReferralSources = pgTable("user_referral_sources", {
   id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
   username: text("username").notNull(),

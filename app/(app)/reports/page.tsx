@@ -1,12 +1,11 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+﻿import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
 import { getMaintainerSession } from "@/lib/maintainer-session"
 import { canAccess, type Role } from "@/lib/permissions"
 import { ReportsClient } from "./reports-client"
 
 export default async function ReportsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   let role: Role | "maintainer" | undefined
 
   if (session) {
@@ -31,3 +30,4 @@ export default async function ReportsPage() {
     </div>
   )
 }
+

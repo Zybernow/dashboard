@@ -1,6 +1,6 @@
-import { cookies, headers } from "next/headers"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { getMaintainerSession } from "@/lib/maintainer-session"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ClientOnly } from "@/components/client-only"
@@ -15,12 +15,10 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Run both auth checks in parallel — for Better Auth users getMaintainerSession
-  // returns null immediately (no cookie), so no extra cost; for maintainer users
-  // this avoids waiting for Better Auth to complete before starting the JWT check.
-  const headersList = await headers()
+  // Run both auth checks in parallel. getSession() is React.cache'd so the
+  // call here and any call in the rendered page.tsx share one DB round-trip.
   const [session, maintainer] = await Promise.all([
-    auth.api.getSession({ headers: headersList }).catch(() => null),
+    getSession(),
     getMaintainerSession().catch(() => null),
   ])
 

@@ -1,11 +1,14 @@
 import {
   ActivityIcon,
+  BellIcon,
   CalendarIcon,
   DatabaseIcon,
   FlagIcon,
   GaugeIcon,
   HardDriveIcon,
+  HeadphonesIcon,
   MailPlusIcon,
+  MegaphoneIcon,
   ScrollIcon,
   ShieldIcon,
   Trash2Icon,
@@ -67,6 +70,23 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Engagement",
+    items: [
+      {
+        section: "announcements",
+        href: "/announcements",
+        label: "Announcements",
+        icon: MegaphoneIcon,
+      },
+      {
+        section: "notifications",
+        href: "/notifications",
+        label: "Push Notifications",
+        icon: BellIcon,
+      },
+    ],
+  },
+  {
     label: "Operations",
     items: [
       { section: "logs", href: "/logs", label: "Logs", icon: ScrollIcon },
@@ -75,6 +95,12 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/maintainers",
         label: "Maintainers",
         icon: UserCogIcon,
+      },
+      {
+        section: "support-staff",
+        href: "/support-staff",
+        label: "Support Staff",
+        icon: HeadphonesIcon,
       },
       { section: "version", href: "/version", label: "Version", icon: HardDriveIcon },
     ],

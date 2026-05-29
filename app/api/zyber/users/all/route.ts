@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { requireSection, runZyber } from "@/lib/api-route"
-import { zyberPost } from "@/lib/zyber-api"
+import { ne } from "drizzle-orm"
+import { requireSection } from "@/lib/api-route"
+import { dbProd } from "@/db/prod/drizzle"
+import { users } from "@/db/prod/schema"
 
 export async function POST(req: NextRequest) {
   const auth = await requireSection("users")
@@ -14,6 +16,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid action" }, { status: 400 })
   }
 
-  const path = `/users/${body.action}/all`
-  return runZyber(() => zyberPost<unknown>(path))
+  const isActive = body.action === "enable"
+
+  try {
+    const updated = await dbProd
+      .update(users)
+      .set({ isActive, updatedAt: new Date() })
+      .where(ne(users.role, "admin"))
+      .returning({ username: users.username })
+
+    return NextResponse.json({ updated_count: updated.length })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "internal error"
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

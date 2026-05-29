@@ -1,11 +1,10 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+﻿import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
 import { canAccess, type Role } from "@/lib/permissions"
 import { MaintainersClient } from "./maintainers-client"
 
 export default async function MaintainersPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/sign-in")
   const role = session.user.role as Role | undefined
   if (!canAccess(role, "maintainers")) redirect("/")
@@ -22,3 +21,4 @@ export default async function MaintainersPage() {
     </div>
   )
 }
+

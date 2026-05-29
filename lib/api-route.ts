@@ -1,7 +1,6 @@
 import "server-only"
-import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
 import { canAccess, type DashboardSection, type Role } from "@/lib/permissions"
 import { getMaintainerSession, type MaintainerSession } from "@/lib/maintainer-session"
 import { ZyberApiError } from "@/lib/zyber-api"
@@ -29,9 +28,10 @@ type RequireSectionResult =
 export async function requireSection(
   section: DashboardSection,
 ): Promise<RequireSectionResult> {
-  // Run both auth checks in parallel to reduce per-request latency.
+  // Run both auth checks in parallel. getSession() is React.cache'd so multiple
+  // calls within the same request (e.g. page + API route) share one DB round-trip.
   const [session, maintainer] = await Promise.all([
-    auth.api.getSession({ headers: await headers() }).catch(() => null),
+    getSession(),
     getMaintainerSession().catch(() => null),
   ])
 

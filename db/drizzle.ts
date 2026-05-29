@@ -17,8 +17,7 @@ export const client =
     connect_timeout: 10,
   });
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForDb.pgClient = client;
-}
+// Always persist in globalThis so hot-reloads in dev don't exhaust the pool.
+globalForDb.pgClient = client;
 
 export const db = drizzle({ client });

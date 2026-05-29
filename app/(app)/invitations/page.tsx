@@ -1,4 +1,4 @@
-import { headers } from "next/headers"
+﻿import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { db } from "@/db/drizzle"
@@ -13,7 +13,7 @@ import { InvitationsTable } from "./invitations-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function InvitationsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/sign-in")
 
   const role = session.user.role as Role | undefined
@@ -67,3 +67,4 @@ export default async function InvitationsPage() {
     </div>
   )
 }
+

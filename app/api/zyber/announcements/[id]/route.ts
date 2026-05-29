@@ -1,0 +1,105 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+import { requireSection } from "@/lib/api-route"
+import { dbProd } from "@/db/prod/drizzle"
+import { announcements } from "@/db/prod/schema"
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireSection("announcements")
+  if (auth.error) return auth.error
+
+  const { id } = await params
+  const announcementId = Number(id)
+  if (!Number.isFinite(announcementId)) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 })
+  }
+
+  const body = (await req.json().catch(() => null)) as {
+    title?: string
+    body?: string
+    image_url?: string
+    button_text?: string
+    button_action?: string
+    is_active?: boolean
+    start_at?: string | null
+    end_at?: string | null
+    price_inr?: number
+  } | null
+
+  if (!body?.title?.trim()) {
+    return NextResponse.json({ error: "title is required" }, { status: 400 })
+  }
+
+  try {
+    const updated = await dbProd
+      .update(announcements)
+      .set({
+        title: body.title.trim(),
+        body: body.body?.trim() ?? "",
+        imageUrl: body.image_url?.trim() ?? "",
+        buttonText: body.button_text?.trim() ?? "",
+        buttonAction: body.button_action?.trim() ?? "",
+        isActive: body.is_active ?? false,
+        startAt: body.start_at ? new Date(body.start_at) : null,
+        endAt: body.end_at ? new Date(body.end_at) : null,
+        priceInr: body.price_inr ?? 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(announcements.id, announcementId))
+      .returning()
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "announcement not found" }, { status: 404 })
+    }
+    const r = updated[0]
+    return NextResponse.json({
+      id: r.id,
+      title: r.title,
+      body: r.body,
+      image_url: r.imageUrl,
+      button_text: r.buttonText,
+      button_action: r.buttonAction,
+      is_active: r.isActive,
+      start_at: r.startAt?.toISOString() ?? null,
+      end_at: r.endAt?.toISOString() ?? null,
+      price_inr: r.priceInr,
+      created_at: r.createdAt.toISOString(),
+      updated_at: r.updatedAt.toISOString(),
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "internal error"
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireSection("announcements")
+  if (auth.error) return auth.error
+
+  const { id } = await params
+  const announcementId = Number(id)
+  if (!Number.isFinite(announcementId)) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 })
+  }
+
+  try {
+    const deleted = await dbProd
+      .delete(announcements)
+      .where(eq(announcements.id, announcementId))
+      .returning({ id: announcements.id })
+
+    if (deleted.length === 0) {
+      return NextResponse.json({ error: "announcement not found" }, { status: 404 })
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "internal error"
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

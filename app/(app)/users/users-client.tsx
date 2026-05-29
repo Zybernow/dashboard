@@ -183,6 +183,19 @@ export function UsersClient() {
     placeholderData: (prev) => prev,
   })
 
+  const workEmail = useMutation({
+    mutationFn: ({ username, verified }: { username: string; verified: boolean }) =>
+      apiFetch<unknown>(`/api/zyber/users/${encodeURIComponent(username)}/work-email-verified`, {
+        method: "POST",
+        body: JSON.stringify({ verified }),
+      }),
+    onSuccess: (_, { verified }) => {
+      toast.success(verified ? "Work email verified" : "Work email unverified")
+      qc.invalidateQueries({ queryKey: ["zyber", "users"] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
   const ACTION_LABELS: Record<string, string> = {
     disable: "User disabled",
     enable: "User enabled",
@@ -257,11 +270,13 @@ export function UsersClient() {
             filters.sort === key && filters.order === "asc" ? "desc" : "asc"
           writeFilters({ sort: key, order })
         },
-        isMutating: action.isPending,
+        isMutating: action.isPending || workEmail.isPending,
         onAction: handleAction,
+        onWorkEmailToggle: (username, verified) =>
+          workEmail.mutate({ username, verified }),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filters.sort, filters.order, action.isPending],
+    [filters.sort, filters.order, action.isPending, workEmail.isPending],
   )
 
   const sorting: SortingState = [

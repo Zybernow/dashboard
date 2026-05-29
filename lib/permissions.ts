@@ -15,6 +15,9 @@ export type DashboardSection =
   | "version"
   | "invitations"
   | "sql-explorer"
+  | "announcements"
+  | "support-staff"
+  | "notifications"
 
 const ALL_ADMIN: DashboardSection[] = [
   "telemetry",
@@ -30,6 +33,9 @@ const ALL_ADMIN: DashboardSection[] = [
   "version",
   "invitations",
   "sql-explorer",
+  "announcements",
+  "support-staff",
+  "notifications",
 ]
 
 const MAINTAINER_SECTIONS: DashboardSection[] = [

@@ -1,12 +1,11 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+﻿import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
 import { getMaintainerSession } from "@/lib/maintainer-session"
 import { canAccess, landingSectionFor, type Role } from "@/lib/permissions"
 import { TelemetryDashboard } from "./telemetry-dashboard"
 
 export default async function TelemetryPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
 
   if (!session) {
     // Check maintainer session — redirect them to their landing page
@@ -35,3 +34,4 @@ export default async function TelemetryPage() {
     </div>
   )
 }
+

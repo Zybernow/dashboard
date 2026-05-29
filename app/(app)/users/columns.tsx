@@ -33,6 +33,7 @@ type ColumnContext = {
   onSort: (key: SortKey) => void
   isMutating: boolean
   onAction: (input: UserActionInput) => void
+  onWorkEmailToggle: (username: string, verified: boolean) => void
 }
 
 export function buildUserColumns(ctx: ColumnContext): ColumnDef<AdminUser>[] {
@@ -277,6 +278,31 @@ export function buildUserColumns(ctx: ColumnContext): ColumnDef<AdminUser>[] {
                 }
               />
               <TooltipContent>{banLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={u.work_email_verified ? "Unverify work email" : "Verify work email"}
+                    disabled={ctx.isMutating}
+                    className={
+                      u.work_email_verified
+                        ? "text-primary hover:bg-primary/10"
+                        : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    }
+                    onClick={() =>
+                      ctx.onWorkEmailToggle(u.username, !u.work_email_verified)
+                    }
+                  >
+                    <BadgeCheckIcon />
+                  </Button>
+                }
+              />
+              <TooltipContent>
+                {u.work_email_verified ? "Unverify work email" : "Verify work email"}
+              </TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger

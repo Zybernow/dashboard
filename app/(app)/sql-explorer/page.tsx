@@ -1,4 +1,4 @@
-import { headers } from "next/headers"
+﻿import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { auth } from "@/lib/auth"
@@ -7,7 +7,7 @@ import { canAccess, type Role } from "@/lib/permissions"
 import { SqlExplorerClient } from "./sql-client"
 
 export default async function SqlExplorerPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (!session) redirect("/sign-in")
 
   const role = session.user.role as Role | undefined
@@ -31,3 +31,4 @@ export default async function SqlExplorerPage() {
     </div>
   )
 }
+
