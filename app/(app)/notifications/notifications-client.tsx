@@ -309,7 +309,7 @@ function CreateCampaignDialog() {
         <div className="space-y-3">
           <div className="space-y-1">
             <Label>Segment</Label>
-            <Select value={segment} onValueChange={(v) => { setSegment(v); setDryRunResult(null) }}>
+            <Select value={segment} onValueChange={(v) => { if (v) { setSegment(v); setDryRunResult(null) } }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
