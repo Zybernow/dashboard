@@ -14,7 +14,7 @@ type RequireSectionResult =
     }
   | {
       error?: undefined
-      session: Awaited<ReturnType<typeof auth.api.getSession>>
+      session: NonNullable<Awaited<ReturnType<typeof getSession>>>
       role: Role | undefined
       maintainer?: undefined
     }
