@@ -39,6 +39,18 @@ export function InvitationsTable({ initial }: { initial: InvitationRow[] }) {
     }
   }
 
+  async function revokeAccess(id: string) {
+    setPendingId(id)
+    try {
+      const res = await fetch(`/api/invitations/${id}/revoke-access`, { method: "POST" })
+      if (res.ok) {
+        startTransition(() => router.refresh())
+      }
+    } finally {
+      setPendingId(null)
+    }
+  }
+
   if (initial.length === 0) {
     return (
       <p className="px-6 py-8 text-center text-sm text-muted-foreground">
@@ -84,6 +96,16 @@ export function InvitationsTable({ initial }: { initial: InvitationRow[] }) {
                     disabled={pendingId === row.id}
                   >
                     {pendingId === row.id ? "Revoking…" : "Revoke"}
+                  </Button>
+                ) : row.status === "accepted" ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => revokeAccess(row.id)}
+                    disabled={pendingId === row.id}
+                  >
+                    {pendingId === row.id ? "Revoking…" : "Revoke access"}
                   </Button>
                 ) : (
                   <span className="text-xs text-muted-foreground">—</span>
