@@ -29,8 +29,12 @@ type RequireSectionResult =
 export async function requireSection(
   section: DashboardSection,
 ): Promise<RequireSectionResult> {
-  // 1. Try Better Auth (admin/marketing users)
-  const session = await auth.api.getSession({ headers: await headers() })
+  // Run both auth checks in parallel to reduce per-request latency.
+  const [session, maintainer] = await Promise.all([
+    auth.api.getSession({ headers: await headers() }).catch(() => null),
+    getMaintainerSession().catch(() => null),
+  ])
+
   if (session) {
     const role = session.user.role as Role | undefined
     if (!canAccess(role, section)) {
@@ -41,8 +45,6 @@ export async function requireSection(
     return { session, role }
   }
 
-  // 2. Try maintainer JWT cookie
-  const maintainer = await getMaintainerSession()
   if (maintainer) {
     if (!canAccess(maintainer.role, section)) {
       return {

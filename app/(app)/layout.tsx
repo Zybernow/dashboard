@@ -15,8 +15,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Try Better Auth session first (admin/marketing users)
-  const session = await auth.api.getSession({ headers: await headers() })
+  // Run both auth checks in parallel — for Better Auth users getMaintainerSession
+  // returns null immediately (no cookie), so no extra cost; for maintainer users
+  // this avoids waiting for Better Auth to complete before starting the JWT check.
+  const headersList = await headers()
+  const [session, maintainer] = await Promise.all([
+    auth.api.getSession({ headers: headersList }).catch(() => null),
+    getMaintainerSession().catch(() => null),
+  ])
 
   let role: Role | "maintainer" | undefined
   let user: { name: string; email: string; image: string | null }
@@ -28,17 +34,15 @@ export default async function AppLayout({
       email: session.user.email,
       image: session.user.image ?? null,
     }
-  } else {
-    // Fallback: maintainer JWT cookie
-    const maintainer = await getMaintainerSession()
-    if (!maintainer) redirect("/sign-in")
-
+  } else if (maintainer) {
     role = "maintainer"
     user = {
       name: maintainer.username,
       email: "",
       image: null,
     }
+  } else {
+    redirect("/sign-in")
   }
 
   const cookieStore = await cookies()

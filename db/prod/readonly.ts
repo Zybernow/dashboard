@@ -52,7 +52,10 @@ export async function runReadonlyQuery(
 ): Promise<postgres.RowList<postgres.Row[]>> {
   return pgReadonly.begin("READ ONLY", async (tx) => {
     // statement_timeout is LOCAL to this transaction only.
-    await tx`SET LOCAL statement_timeout = ${timeoutMs}`
+    // Use unsafe() because postgres.js would parameterize ${timeoutMs} as $1,
+    // and PostgreSQL rejects parameter placeholders in SET LOCAL statements.
+    // timeoutMs is a hardcoded constant, not user input, so this is safe.
+    await tx.unsafe(`SET LOCAL statement_timeout = ${timeoutMs}`)
     return tx.unsafe(rawSql)
   })
 }
