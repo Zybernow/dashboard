@@ -55,6 +55,23 @@ export type FirebaseMetrics = {
   events: Record<string, WindowedCount>
 }
 
+export type MatchPairRow = {
+  user1: string
+  user2: string
+  matched_at: string
+  message_count: number
+  call_count: number
+  call_seconds: number
+  first_message_at: string | null
+  last_message_at: string | null
+  convo_started_at: string | null
+}
+
+export type MatchLeaderboard = {
+  pairs: MatchPairRow[]
+  limit: number
+}
+
 export type AdminUser = {
   username: string
   email: string

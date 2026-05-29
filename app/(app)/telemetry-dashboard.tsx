@@ -16,6 +16,8 @@ import type {
   DailyCallStatsResponse,
   EngagementMetrics,
   FirebaseMetrics,
+  MatchLeaderboard,
+  MatchPairRow,
   ReferralAnalytics,
   Telemetry,
   WindowedCount,
@@ -72,6 +74,13 @@ export function TelemetryDashboard() {
       apiFetch<FirebaseMetrics>("/api/zyber/analytics/firebase"),
     // GA4 data is delayed up to ~24h and rate-limited; no point polling.
     staleTime: 60 * 60 * 1000,
+  })
+
+  const matches = useQuery({
+    queryKey: ["zyber", "matches"],
+    queryFn: () =>
+      apiFetch<MatchLeaderboard>("/api/zyber/analytics/matches"),
+    refetchInterval: 30_000,
   })
 
   return (
@@ -136,6 +145,16 @@ export function TelemetryDashboard() {
         description="Work email verified"
         data={engagement.data?.verified}
         isLoading={engagement.isLoading}
+      />
+      <WindowedSection
+        title="Mutual matches"
+        description="Both users swiped each other"
+        data={engagement.data?.matches}
+        isLoading={engagement.isLoading}
+      />
+      <MatchesLeaderboard
+        data={matches.data?.pairs}
+        isLoading={matches.isLoading}
       />
       <FirebaseEventsSection
         data={firebase.data?.events}
@@ -386,6 +405,123 @@ function FirebaseEventsSection({
                     </td>
                     <td className="px-6 py-2 text-right tabular-nums">
                       {w.last_30d.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return "—"
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
+function formatSpan(from: string | null, to: string | null): string {
+  if (!from || !to) return "—"
+  const ms = new Date(to).getTime() - new Date(from).getTime()
+  if (!Number.isFinite(ms) || ms <= 0) return "—"
+  const days = Math.floor(ms / 86_400_000)
+  if (days >= 1) return `${days}d`
+  const hours = Math.floor(ms / 3_600_000)
+  if (hours >= 1) return `${hours}h`
+  return `${Math.max(1, Math.floor(ms / 60_000))}m`
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return "—"
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
+function MatchesLeaderboard({
+  data,
+  isLoading,
+}: {
+  data: MatchPairRow[] | undefined
+  isLoading: boolean
+}) {
+  const rows = data ?? []
+  return (
+    <section>
+      <h2 className="mb-1 text-sm font-medium text-muted-foreground">
+        Most active matches
+      </h2>
+      <p className="mb-3 text-xs text-muted-foreground/70">
+        Matched pairs ranked by chat activity. Engagement is activity-based
+        (messages, calls, conversation lifespan) — not true time spent together.
+      </p>
+      <Card>
+        <CardContent className="overflow-x-auto px-0">
+          {isLoading ? (
+            <div className="space-y-2 px-6 py-2">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+            </div>
+          ) : rows.length === 0 ? (
+            <p className="px-6 py-6 text-sm text-muted-foreground">
+              No matched pairs with conversations yet.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-xs text-muted-foreground">
+                  <th className="px-6 py-2 text-left font-medium">Pair</th>
+                  <th className="px-3 py-2 text-right font-medium">Messages</th>
+                  <th className="px-3 py-2 text-right font-medium">Calls</th>
+                  <th className="px-3 py-2 text-right font-medium">Call time</th>
+                  <th className="px-3 py-2 text-right font-medium">Lifespan</th>
+                  <th className="px-3 py-2 text-right font-medium">Matched</th>
+                  <th className="px-6 py-2 text-right font-medium">
+                    Last active
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((p) => (
+                  <tr
+                    key={`${p.user1} ${p.user2}`}
+                    className="border-b last:border-0"
+                  >
+                    <td className="px-6 py-2 font-medium">
+                      {p.user1} ↔ {p.user2}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {p.message_count.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {p.call_count.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatDuration(p.call_seconds)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatSpan(
+                        p.convo_started_at ?? p.first_message_at,
+                        p.last_message_at,
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatDate(p.matched_at)}
+                    </td>
+                    <td className="px-6 py-2 text-right tabular-nums">
+                      {formatDate(p.last_message_at)}
                     </td>
                   </tr>
                 ))}

@@ -182,3 +182,20 @@ export const analyticsEvents = pgTable("analytics_events", {
   sessionId: text("session_id").notNull(),
   serverTs: timestamp("server_ts", { withTimezone: true }).notNull(),
 })
+
+export const conversations = pgTable("conversations", {
+  user1: text("user1").notNull(),
+  user2: text("user2").notNull(),
+  lastMessageSeq: bigint("last_message_seq", { mode: "number" }).notNull(),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+})
+
+export const messages = pgTable("messages", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  conversationUser1: text("conversation_user1").notNull(),
+  conversationUser2: text("conversation_user2").notNull(),
+  messageType: text("message_type").notNull(),
+  callDurationSeconds: integer("call_duration_seconds"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+})
