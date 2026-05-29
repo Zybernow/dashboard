@@ -146,12 +146,6 @@ export function TelemetryDashboard() {
         data={engagement.data?.verified}
         isLoading={engagement.isLoading}
       />
-      <WindowedSection
-        title="Mutual matches"
-        description="Both users swiped each other"
-        data={engagement.data?.matches}
-        isLoading={engagement.isLoading}
-      />
       <MatchesLeaderboard
         data={matches.data?.pairs}
         isLoading={matches.isLoading}
