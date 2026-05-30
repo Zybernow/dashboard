@@ -1,9 +1,9 @@
 import { eq, ne, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
+import { zyberGet } from "@/lib/zyber-api"
 import { dbProd } from "@/db/prod/drizzle"
-import { redis } from "@/db/redis"
 import { communities, messages, users } from "@/db/prod/schema"
-import type { Telemetry } from "@/lib/zyber-types"
+import type { LiveUsersPage, Telemetry } from "@/lib/zyber-types"
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000).toISOString()
 const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString()
@@ -35,11 +35,13 @@ export async function GET() {
         })
         .from(messages)
         .where(eq(messages.messageType, "call")),
-      // Live user count — query Redis directly (online_users ZSET, 3-min TTL)
-      redis
-        .zcount("online_users", Math.floor(Date.now() / 1000) - 180, "+inf")
+      // Live user count needs Redis (the online_users ZSET), which is only
+      // reachable in-VPC. The Go presence endpoint returns the live total, so
+      // we read it from there rather than hitting Redis from Vercel.
+      zyberGet<LiveUsersPage>("/admin/users/live", { page: 1, limit: 1 })
+        .then((r) => r.total)
         .catch((e) => {
-          console.error("[telemetry] redis live count:", e instanceof Error ? e.message : e)
+          console.error("[telemetry] live count:", e instanceof Error ? e.message : e)
           return 0
         }),
     ])
