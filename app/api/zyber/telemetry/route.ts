@@ -36,9 +36,12 @@ export async function GET() {
         .from(messages)
         .where(eq(messages.messageType, "call")),
       // Live user count requires Redis — fetch from Go backend, default to 0 on failure
-      zyberGet<{ users: unknown[] }>("/admin/users/live")
-        .then((r) => (Array.isArray(r.users) ? r.users.length : 0))
-        .catch(() => 0),
+      zyberGet<{ total: number }>("/admin/users/live")
+        .then((r) => (typeof r.total === "number" ? r.total : 0))
+        .catch((e) => {
+          console.error("[telemetry] live count:", e instanceof Error ? e.message : e)
+          return 0
+        }),
     ])
 
     const u = userRows[0]
