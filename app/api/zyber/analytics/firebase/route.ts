@@ -56,6 +56,11 @@ export async function GET() {
   const auth = await requireSection("telemetry")
   if (auth.error) return auth.error
 
+  // GA4 credentials are optional — return empty payload if not configured
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON || !process.env.GA4_PROPERTY_ID) {
+    return NextResponse.json({ sessions: null, active_users: null, avg_session_duration_seconds: null, events: {} })
+  }
+
   try {
     const client = ga4Client()
     const property = ga4PropertyPath()

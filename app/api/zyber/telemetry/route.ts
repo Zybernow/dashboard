@@ -5,8 +5,8 @@ import { redis } from "@/db/redis"
 import { communities, messages, users } from "@/db/prod/schema"
 import type { Telemetry } from "@/lib/zyber-types"
 
-const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000)
-const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000)
+const hoursAgo = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000).toISOString()
+const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString()
 
 export async function GET() {
   const auth = await requireSection("telemetry")

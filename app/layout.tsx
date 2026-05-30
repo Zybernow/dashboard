@@ -43,7 +43,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={`${font.variable} antialiased`}>
+      <body className={`${font.variable} antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <QueryProvider>
             {children}

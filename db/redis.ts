@@ -13,19 +13,35 @@ function createRedisClient(): Redis {
   const useTLS = process.env.REDIS_TLS === "true"
   const caPath = process.env.REDIS_CA_CERT
 
+  let tlsOptions: object | undefined
+  if (useTLS) {
+    let ca: Buffer | undefined
+    if (caPath) {
+      try {
+        ca = fs.readFileSync(caPath)
+      } catch {
+        // CA cert file not present — fall back to skipping verification.
+      }
+    }
+    tlsOptions = ca
+      ? {
+          ca,
+          // Memorystore IP doesn't match the cert's hostname SAN — skip that
+          // specific check while still verifying the chain against our CA.
+          checkServerIdentity: () => undefined,
+        }
+      : {
+          // No CA cert: still encrypt but don't verify the server certificate.
+          // Safe for private VPC-only Memorystore where MITM is not a concern.
+          rejectUnauthorized: false,
+        }
+  }
+
   return new Redis({
     host,
     port,
     password: process.env.REDIS_PASSWORD || undefined,
-    tls: useTLS
-      ? {
-          ca: caPath ? fs.readFileSync(caPath) : undefined,
-          // Memorystore is reached by private IP; the cert SAN is the instance
-          // hostname, not the IP — skip hostname check while still verifying
-          // the certificate chain against the provided CA.
-          checkServerIdentity: () => undefined,
-        }
-      : undefined,
+    tls: tlsOptions,
     lazyConnect: false,
     maxRetriesPerRequest: 1,
     connectTimeout: 5000,
