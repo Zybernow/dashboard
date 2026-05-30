@@ -1,7 +1,7 @@
 import { eq, ne, sql } from "drizzle-orm"
 import { requireSection } from "@/lib/api-route"
-import { zyberGet } from "@/lib/zyber-api"
 import { dbProd } from "@/db/prod/drizzle"
+import { redis } from "@/db/redis"
 import { communities, messages, users } from "@/db/prod/schema"
 import type { Telemetry } from "@/lib/zyber-types"
 
@@ -35,11 +35,11 @@ export async function GET() {
         })
         .from(messages)
         .where(eq(messages.messageType, "call")),
-      // Live user count requires Redis — fetch from Go backend, default to 0 on failure
-      zyberGet<{ total: number }>("/admin/users/live")
-        .then((r) => (typeof r.total === "number" ? r.total : 0))
+      // Live user count — query Redis directly (online_users ZSET, 3-min TTL)
+      redis
+        .zcount("online_users", Math.floor(Date.now() / 1000) - 180, "+inf")
         .catch((e) => {
-          console.error("[telemetry] live count:", e instanceof Error ? e.message : e)
+          console.error("[telemetry] redis live count:", e instanceof Error ? e.message : e)
           return 0
         }),
     ])
