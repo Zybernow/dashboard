@@ -1,4 +1,5 @@
 import "server-only"
+import { cache } from "react"
 import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
 import { eq } from "drizzle-orm"
@@ -12,7 +13,7 @@ export type MaintainerSession = {
   colleges: string[]
 }
 
-export async function getMaintainerSession(): Promise<MaintainerSession | null> {
+async function _getMaintainerSession(): Promise<MaintainerSession | null> {
   const secret = process.env.JWT_SECRET_ADMIN
   if (!secret) return null
 
@@ -45,6 +46,8 @@ export async function getMaintainerSession(): Promise<MaintainerSession | null> 
     return null
   }
 }
+
+export const getMaintainerSession = cache(_getMaintainerSession)
 
 export async function getMaintainerColleges(
   maintainerId: number,
