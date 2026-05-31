@@ -22,17 +22,17 @@ export async function GET() {
       authenticated_as: data,
     })
   } catch (err) {
-    const isZyberError = err instanceof ZyberApiError
+    const zyberErr = err instanceof ZyberApiError ? err : null
     return NextResponse.json(
       {
         ok: false,
         url: configuredUrl,
         credentials_set: { username: hasUsername, password: hasPassword },
         error: err instanceof Error ? err.message : String(err),
-        status: isZyberError ? (err as ZyberApiError).status : null,
-        payload: isZyberError ? (err as ZyberApiError).payload : null,
+        status: zyberErr?.status ?? null,
+        payload: zyberErr?.payload ?? null,
       },
-      { status: 502 },
+      { status: zyberErr?.status ?? 502 },
     )
   }
 }
