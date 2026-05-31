@@ -2,8 +2,16 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -22,29 +30,60 @@ type InvitationRow = {
   createdAt: string
 }
 
+const ROLE_OPTIONS = [
+  { value: "user", label: "User" },
+  { value: "marketing", label: "Marketing" },
+  { value: "admin", label: "Admin" },
+]
+
 export function InvitationsTable({ initial }: { initial: InvitationRow[] }) {
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
-  async function revoke(id: string) {
+  async function remove(id: string) {
     setPendingId(id)
     try {
       const res = await fetch(`/api/invitations/${id}`, { method: "DELETE" })
       if (res.ok) {
+        toast.success("Access removed")
         startTransition(() => router.refresh())
+      } else {
+        toast.error("Could not remove access")
       }
     } finally {
       setPendingId(null)
     }
   }
 
-  async function revokeAccess(id: string) {
+  async function changeRole(id: string, role: string) {
     setPendingId(id)
     try {
-      const res = await fetch(`/api/invitations/${id}/revoke-access`, { method: "POST" })
+      const res = await fetch(`/api/invitations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      })
       if (res.ok) {
+        toast.success("Role updated")
         startTransition(() => router.refresh())
+      } else {
+        toast.error("Could not update role")
+      }
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  async function resend(id: string) {
+    setPendingId(id)
+    try {
+      const res = await fetch(`/api/invitations/${id}/resend`, { method: "POST" })
+      if (res.ok) {
+        toast.success("Invitation email resent")
+      } else {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(`Could not resend: ${data.error ?? "unknown error"}`)
       }
     } finally {
       setPendingId(null)
@@ -75,11 +114,27 @@ export function InvitationsTable({ initial }: { initial: InvitationRow[] }) {
           const expired =
             row.status === "pending" && new Date(row.expiresAt) < new Date()
           const effectiveStatus = expired ? "expired" : row.status
+          const busy = pendingId === row.id
           return (
             <TableRow key={row.id}>
               <TableCell className="pl-6 font-medium">{row.email}</TableCell>
               <TableCell>
-                <Badge variant="secondary">{row.role}</Badge>
+                <Select
+                  value={row.role}
+                  onValueChange={(v) => v && v !== row.role && changeRole(row.id, v)}
+                  disabled={busy}
+                >
+                  <SelectTrigger size="sm" className="w-[130px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>
                 <StatusBadge status={effectiveStatus} />
@@ -88,28 +143,27 @@ export function InvitationsTable({ initial }: { initial: InvitationRow[] }) {
                 {new Date(row.expiresAt).toLocaleDateString()}
               </TableCell>
               <TableCell className="pr-6 text-right">
-                {row.status === "pending" && !expired ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => revoke(row.id)}
-                    disabled={pendingId === row.id}
-                  >
-                    {pendingId === row.id ? "Revoking…" : "Revoke"}
-                  </Button>
-                ) : row.status === "accepted" ? (
+                <div className="flex items-center justify-end gap-1">
+                  {row.status === "pending" && !expired ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => resend(row.id)}
+                      disabled={busy}
+                    >
+                      Resend
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-destructive hover:text-destructive"
-                    onClick={() => revokeAccess(row.id)}
-                    disabled={pendingId === row.id}
+                    onClick={() => remove(row.id)}
+                    disabled={busy}
                   >
-                    {pendingId === row.id ? "Revoking…" : "Revoke access"}
+                    {busy ? "Removing…" : "Remove"}
                   </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-                )}
+                </div>
               </TableCell>
             </TableRow>
           )
