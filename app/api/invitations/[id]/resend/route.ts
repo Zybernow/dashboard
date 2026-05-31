@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { db } from "@/db/drizzle"
 import { invitation } from "@/db/schema"
-import { zyberPost, ZyberApiError } from "@/lib/zyber-api"
+import { sendInvitationEmail } from "@/lib/mailer"
 
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -36,25 +36,16 @@ export async function POST(
     return NextResponse.json({ error: "not_found" }, { status: 404 })
   }
 
-  if (inv.status !== "accepted") {
-    return NextResponse.json({ error: "invitation_not_accepted" }, { status: 400 })
+  if (inv.status !== "pending" || inv.expiresAt < new Date()) {
+    return NextResponse.json({ error: "invitation_not_pending" }, { status: 400 })
   }
 
   try {
-    await zyberPost("/users/disable", { email: inv.email })
+    await sendInvitationEmail({ email: inv.email, role: inv.role })
   } catch (err) {
-    if (!(err instanceof ZyberApiError && err.status === 404)) {
-      const message = err instanceof ZyberApiError ? err.message : "internal error"
-      return NextResponse.json({ error: message }, { status: 500 })
-    }
-    // User not found — still mark the invitation revoked
+    const message = err instanceof Error ? err.message : "email_failed"
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 
-  const [updated] = await db
-    .update(invitation)
-    .set({ status: "revoked" })
-    .where(eq(invitation.id, id))
-    .returning()
-
-  return NextResponse.json({ invitation: updated })
+  return NextResponse.json({ ok: true })
 }

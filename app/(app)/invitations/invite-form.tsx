@@ -27,6 +27,7 @@ export function InviteForm() {
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<
     | { kind: "success"; message: string }
+    | { kind: "warning"; message: string }
     | { kind: "error"; message: string }
     | null
   >(null)
@@ -41,13 +42,26 @@ export function InviteForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, role }),
       })
-      const data = await res.json().catch(() => ({}))
+      const data = await res.json().catch(() => ({})) as {
+        error?: string
+        emailSent?: boolean
+        emailError?: string
+      }
       if (!res.ok) {
-        const code = (data as { error?: string }).error ?? "request_failed"
+        const code = data.error ?? "request_failed"
         setFeedback({ kind: "error", message: humanize(code) })
         return
       }
-      setFeedback({ kind: "success", message: `Invitation sent to ${email}.` })
+      if (data.emailSent) {
+        setFeedback({ kind: "success", message: `Invitation sent to ${email}.` })
+      } else {
+        setFeedback({
+          kind: "warning",
+          message: `Invitation created for ${email}, but the email couldn't be sent (${
+            data.emailError ?? "unknown error"
+          }). They can still sign in, or you can resend from the table below.`,
+        })
+      }
       setEmail("")
       setRole("user")
       router.refresh()
@@ -104,7 +118,9 @@ export function InviteForm() {
             "md:col-span-3 text-xs " +
             (feedback.kind === "success"
               ? "text-emerald-600 dark:text-emerald-400"
-              : "text-destructive")
+              : feedback.kind === "warning"
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-destructive")
           }
         >
           {feedback.message}
