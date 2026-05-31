@@ -11,7 +11,7 @@ export async function GET(
   if (auth.error) return auth.error
   const { type } = await params
   return runZyber(() =>
-    zyberGet<LogResponse>(`/admin/logs/${encodeURIComponent(type)}`),
+    zyberGet<LogResponse>(`/admin/logs/${encodeURIComponent(type)}`, { limit: 500 }),
   )
 }
 
