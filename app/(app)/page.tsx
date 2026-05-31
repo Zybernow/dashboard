@@ -1,8 +1,18 @@
 ﻿import { redirect } from "next/navigation"
+import dynamic from "next/dynamic"
 import { getSession } from "@/lib/session"
 import { getMaintainerSession } from "@/lib/maintainer-session"
 import { canAccess, landingSectionFor, type Role } from "@/lib/permissions"
-import { TelemetryDashboard } from "./telemetry-dashboard"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const TelemetryDashboard = dynamic(
+  () =>
+    import("./telemetry-dashboard").then((m) => ({ default: m.TelemetryDashboard })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-96 w-full rounded-lg" />,
+  },
+)
 
 export default async function TelemetryPage() {
   const session = await getSession()
