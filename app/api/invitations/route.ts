@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/db/drizzle"
 import { invitation } from "@/db/schema"
 import { ROLES } from "@/lib/permissions"
+import { sendInvitationEmail } from "@/lib/mailer"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -75,5 +76,17 @@ export async function POST(request: NextRequest) {
     })
     .returning()
 
-  return NextResponse.json({ invitation: created }, { status: 201 })
+  let emailSent = false
+  let emailError: string | undefined
+  try {
+    await sendInvitationEmail({ email: normalized, role: created.role })
+    emailSent = true
+  } catch (err) {
+    emailError = err instanceof Error ? err.message : "email_failed"
+  }
+
+  return NextResponse.json(
+    { invitation: created, emailSent, emailError },
+    { status: 201 },
+  )
 }
