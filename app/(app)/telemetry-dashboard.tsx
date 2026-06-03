@@ -38,6 +38,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 
 export function TelemetryDashboard() {
   const [days, setDays] = useState("30")
@@ -89,190 +95,206 @@ export function TelemetryDashboard() {
   })
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">Users</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard
-            label="Total"
-            value={telemetry.data?.users.total}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Active"
-            value={telemetry.data?.users.active}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Disabled"
-            value={telemetry.data?.users.disabled}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Live now"
-            value={telemetry.data?.users.live}
-            highlight
-            isLoading={telemetry.isLoading}
-          />
-        </div>
-      </section>
+    <Tabs defaultValue="activity" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="activity">Activity</TabsTrigger>
+        <TabsTrigger value="engagement">Engagement</TabsTrigger>
+        <TabsTrigger value="app-events">App Events</TabsTrigger>
+      </TabsList>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-          New users
-        </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            label="Last 24h"
-            value={telemetry.data?.users.new_24h}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Last 7d"
-            value={telemetry.data?.users.new_7d}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Last 30d"
-            value={telemetry.data?.users.new_30d}
-            isLoading={telemetry.isLoading}
-          />
-        </div>
-      </section>
-
-      <WindowedSection
-        title="Onboarded users"
-        data={engagement.data?.onboarded}
-        isLoading={engagement.isLoading}
-      />
-      <WindowedSection
-        title="Verified users"
-        description="Work email verified"
-        data={engagement.data?.verified}
-        isLoading={engagement.isLoading}
-      />
-      <MatchesLeaderboard
-        data={matches.data?.pairs}
-        isLoading={matches.isLoading}
-        sort={matchSort}
-        onSortChange={setMatchSort}
-      />
-      <FirebaseEventsSection
-        data={firebase.data?.events}
-        isLoading={firebase.isLoading}
-      />
-
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-          Communities & calls
-        </h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard
-            label="Communities"
-            value={telemetry.data?.community.total}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Total members"
-            value={telemetry.data?.community.total_members}
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Active calls"
-            value={telemetry.data?.calls.active}
-            highlight
-            isLoading={telemetry.isLoading}
-          />
-          <StatCard
-            label="Total call minutes"
-            value={
-              telemetry.data
-                ? Math.round(telemetry.data.calls.total_seconds / 60)
-                : undefined
-            }
-            isLoading={telemetry.isLoading}
-          />
-        </div>
-      </section>
-
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div>
-            <CardTitle>Daily call seconds</CardTitle>
-            <CardDescription>Aggregated call duration per day.</CardDescription>
+      {/* Activity Tab */}
+      <TabsContent value="activity" className="space-y-6">
+        <section>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">Users</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <StatCard
+              label="Total"
+              value={telemetry.data?.users.total}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Active"
+              value={telemetry.data?.users.active}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Disabled"
+              value={telemetry.data?.users.disabled}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Live now"
+              value={telemetry.data?.users.live}
+              highlight
+              isLoading={telemetry.isLoading}
+            />
           </div>
-          <Select value={days} onValueChange={(v) => v && setDays(v)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">7 days</SelectItem>
-              <SelectItem value="30">30 days</SelectItem>
-              <SelectItem value="90">90 days</SelectItem>
-              <SelectItem value="365">1 year</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          {callStats.isLoading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : callStats.data && callStats.data.stats.length > 0 ? (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={callStats.data.stats}
-                  margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis
-                    dataKey="date"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis fontSize={11} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                      fontSize: 12,
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="total_seconds"
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No data.</p>
-          )}
-        </CardContent>
-      </Card>
+        </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Referral sources</CardTitle>
-          <CardDescription>
-            How users discovered Zyber, by self-reported source.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {referrals.isLoading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : referrals.data && Object.keys(referrals.data.sources).length > 0 ? (
-            <ReferralBars sources={referrals.data.sources} />
-          ) : (
-            <p className="text-sm text-muted-foreground">No referral data yet.</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        <section>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+            New users
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <StatCard
+              label="Last 24h"
+              value={telemetry.data?.users.new_24h}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Last 7d"
+              value={telemetry.data?.users.new_7d}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Last 30d"
+              value={telemetry.data?.users.new_30d}
+              isLoading={telemetry.isLoading}
+            />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+            Communities & calls
+          </h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <StatCard
+              label="Communities"
+              value={telemetry.data?.community.total}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Total members"
+              value={telemetry.data?.community.total_members}
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Active calls"
+              value={telemetry.data?.calls.active}
+              highlight
+              isLoading={telemetry.isLoading}
+            />
+            <StatCard
+              label="Total call minutes"
+              value={
+                telemetry.data
+                  ? Math.round(telemetry.data.calls.total_seconds / 60)
+                  : undefined
+              }
+              isLoading={telemetry.isLoading}
+            />
+          </div>
+        </section>
+
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle>Daily call seconds</CardTitle>
+              <CardDescription>Aggregated call duration per day.</CardDescription>
+            </div>
+            <Select value={days} onValueChange={(v) => v && setDays(v)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">7 days</SelectItem>
+                <SelectItem value="30">30 days</SelectItem>
+                <SelectItem value="90">90 days</SelectItem>
+                <SelectItem value="365">1 year</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            {callStats.isLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : callStats.data && callStats.data.stats.length > 0 ? (
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={callStats.data.stats}
+                    margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis
+                      dataKey="date"
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 6,
+                        fontSize: 12,
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total_seconds"
+                      stroke="var(--primary)"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No data.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Referral sources</CardTitle>
+            <CardDescription>
+              How users discovered Zyber, by self-reported source.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {referrals.isLoading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : referrals.data && Object.keys(referrals.data.sources).length > 0 ? (
+              <ReferralBars sources={referrals.data.sources} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No referral data yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Engagement Tab */}
+      <TabsContent value="engagement" className="space-y-6">
+        <WindowedSection
+          title="Onboarded users"
+          data={engagement.data?.onboarded}
+          isLoading={engagement.isLoading}
+        />
+        <WindowedSection
+          title="Verified users"
+          description="Work email verified"
+          data={engagement.data?.verified}
+          isLoading={engagement.isLoading}
+        />
+      </TabsContent>
+
+      {/* App Events Tab */}
+      <TabsContent value="app-events" className="space-y-6">
+        <FirebaseEventsSection
+          data={firebase.data?.events}
+          isLoading={firebase.isLoading}
+        />
+        <MatchesLeaderboard
+          data={matches.data?.pairs}
+          isLoading={matches.isLoading}
+          sort={matchSort}
+          onSortChange={setMatchSort}
+        />
+      </TabsContent>
+    </Tabs>
   )
 }
 
