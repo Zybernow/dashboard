@@ -112,7 +112,9 @@ export default function MatchIntelligencePage() {
     return points.map((p, i) => {
       if (i === 0) return 0
       const prev = points[i - 1]
-      return ((prev.conversations - p.conversations) / prev.conversations) * 100
+      return prev.conversations > 0
+        ? ((prev.conversations - p.conversations) / prev.conversations) * 100
+        : 0
     })
   }, [data])
 

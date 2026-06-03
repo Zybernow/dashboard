@@ -144,7 +144,7 @@ export default function UserCohortsPage() {
               <p className="text-sm font-medium text-green-400 mb-1">🏆 Best Performing Cohort</p>
               <p className="text-sm text-muted-foreground">
                 Users who signed up on{" "}
-                <span className="text-foreground font-medium">{bestCohort?.signup_week}</span>{" "}
+                <span className="text-foreground font-medium">{bestCohort?.signup_week ?? "—"}</span>{" "}
                 achieved a{" "}
                 <span className="text-green-400 font-medium">
                   {bestCohort ? formatPercent(bestCohort.meaningful_match_rate) : "—"}
@@ -156,7 +156,7 @@ export default function UserCohortsPage() {
               <p className="text-sm font-medium text-red-400 mb-1">⚠️ Cohort Requiring Attention</p>
               <p className="text-sm text-muted-foreground">
                 The{" "}
-                <span className="text-foreground font-medium">{worstCohort?.signup_week}</span>{" "}
+                <span className="text-foreground font-medium">{worstCohort?.signup_week ?? "—"}</span>{" "}
                 cohort converted at only{" "}
                 <span className="text-red-400 font-medium">
                   {worstCohort ? formatPercent(worstCohort.meaningful_match_rate) : "—"}
