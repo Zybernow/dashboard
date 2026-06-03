@@ -1,8 +1,10 @@
 import {
   ActivityIcon,
+  BarChart3Icon,
   BellIcon,
   CalendarIcon,
   DatabaseIcon,
+  FilterIcon,
   FlagIcon,
   GaugeIcon,
   HardDriveIcon,
@@ -12,9 +14,11 @@ import {
   ScrollIcon,
   ShieldIcon,
   Trash2Icon,
+  TrendingUpIcon,
   UserCogIcon,
   UsersIcon,
   UsersRoundIcon,
+  Users2Icon,
 } from "lucide-react"
 import type { DashboardSection } from "@/lib/permissions"
 
@@ -31,6 +35,15 @@ export type NavGroup = {
 }
 
 export const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Analytics",
+    items: [
+      { section: "analytics-overview", href: "/analytics/overview", label: "Platform Overview", icon: BarChart3Icon },
+      { section: "analytics-funnel", href: "/analytics/funnel", label: "Funnel", icon: FilterIcon },
+      { section: "analytics-match-intelligence", href: "/analytics/match-intelligence", label: "Match Intelligence", icon: Users2Icon },
+      { section: "analytics-user-cohorts", href: "/analytics/user-cohorts", label: "User Cohorts", icon: TrendingUpIcon },
+    ],
+  },
   {
     label: "Overview",
     items: [

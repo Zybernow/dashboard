@@ -18,6 +18,10 @@ export type DashboardSection =
   | "announcements"
   | "support-staff"
   | "notifications"
+  | "analytics-overview"
+  | "analytics-funnel"
+  | "analytics-match-intelligence"
+  | "analytics-user-cohorts"
 
 const ALL_ADMIN: DashboardSection[] = [
   "telemetry",
@@ -36,6 +40,10 @@ const ALL_ADMIN: DashboardSection[] = [
   "announcements",
   "support-staff",
   "notifications",
+  "analytics-overview",
+  "analytics-funnel",
+  "analytics-match-intelligence",
+  "analytics-user-cohorts",
 ]
 
 const MAINTAINER_SECTIONS: DashboardSection[] = [
@@ -48,7 +56,7 @@ const MAINTAINER_SECTIONS: DashboardSection[] = [
 
 const ACCESS: Record<Role, DashboardSection[]> = {
   admin: ALL_ADMIN,
-  marketing: ["telemetry"],
+  marketing: ["telemetry", "analytics-overview", "analytics-funnel", "analytics-match-intelligence", "analytics-user-cohorts"],
   user: [],
 }
 
