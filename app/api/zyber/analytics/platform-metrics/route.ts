@@ -79,11 +79,9 @@ export async function GET() {
         )
         SELECT
           TO_CHAR(days.day, 'Mon DD') AS date,
-          COALESCE(COUNT(u.username) FILTER (
-            WHERE u.created_at >= days.day AND u.created_at < days.day + INTERVAL '1 day'
-          ), 0)::int AS value
+          COUNT(u.username)::int AS value
         FROM days
-        LEFT JOIN users u ON TRUE
+        LEFT JOIN users u ON u.created_at >= days.day AND u.created_at < days.day + INTERVAL '1 day'
         GROUP BY days.day
         ORDER BY days.day
       `),
