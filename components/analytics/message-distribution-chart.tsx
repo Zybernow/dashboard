@@ -1,0 +1,50 @@
+"use client"
+
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts"
+
+interface MessageBucket {
+  bucket: string
+  count: number
+}
+
+const COLORS = ["#F87171", "#FBBF24", "#7C6FF7", "#34D399"]
+
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-popover border rounded-lg p-3 shadow-xl text-[12px]">
+      <p className="font-semibold text-foreground mb-1">{label}</p>
+      <p className="text-muted-foreground">
+        Matches:{" "}
+        <span className="text-foreground font-medium">{payload[0]?.value}</span>
+      </p>
+    </div>
+  )
+}
+
+export function MessageDistributionChart({ data }: { data: MessageBucket[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={data} margin={{ top: 8, right: 4, left: -20, bottom: 0 }} barSize={36}>
+        <CartesianGrid strokeDasharray="4 4" vertical={false} className="opacity-30" />
+        <XAxis dataKey="bucket" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
+        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+          {data.map((_, idx) => (
+            <Cell key={idx} fill={COLORS[idx % COLORS.length]} fillOpacity={0.85} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
