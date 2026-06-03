@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Users, UserCheck, Send, Target } from "lucide-react"
+import { Send } from "lucide-react"
 import { apiFetch } from "@/lib/fetcher"
 import { AnalyticsKPICard } from "@/components/analytics/kpi-card"
 import { AnalyticsSectionCard } from "@/components/analytics/section-card"
@@ -105,12 +105,9 @@ export default function FunnelPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <AnalyticsKPICard label="Total Users" value={data ? formatNumber(data.total_users) : "—"} subValue="Registered" icon={<Users className="w-3.5 h-3.5" />} isLoading={isLoading} />
-        <AnalyticsKPICard label="Onboarded" value={data ? formatNumber(data.onboarded_users) : "—"} subValue="Finished onboarding" icon={<UserCheck className="w-3.5 h-3.5" />} isLoading={isLoading} />
+      <div className="grid grid-cols-2 gap-4 max-w-lg">
         <AnalyticsKPICard label="Sent First Message" value={data ? formatNumber(data.first_message_users) : "—"} subValue="Started a conversation" icon={<Send className="w-3.5 h-3.5" />} isLoading={isLoading} />
         <AnalyticsKPICard label="First Msg Rate" value={data ? formatPercent(data.first_message_sent_rate) : "—"} subValue="Of onboarded users" icon={<Send className="w-3.5 h-3.5" />} isLoading={isLoading} />
-        <AnalyticsKPICard label="Meaningful Matches" value={data ? formatNumber(data.meaningful_match_users) : "—"} subValue="Reached 10+ messages" icon={<Target className="w-3.5 h-3.5" />} isLoading={isLoading} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
