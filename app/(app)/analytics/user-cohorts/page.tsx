@@ -41,7 +41,7 @@ export default function UserCohortsPage() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const cohorts = data?.weekly_signup_cohorts ?? []
+  const cohorts = useMemo(() => data?.weekly_signup_cohorts ?? [], [data?.weekly_signup_cohorts])
 
   const bestCohort = useMemo(
     () => [...cohorts].sort((a, b) => b.meaningful_match_rate - a.meaningful_match_rate)[0],

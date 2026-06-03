@@ -97,7 +97,22 @@ export async function GET() {
       `),
     ])
 
-    const s = (summaryRows as any[])[0]
+    interface SummaryRow extends Record<string, unknown> {
+      total_users: string | number
+      onboarded_users: string | number
+      started_conversations: string | number
+      meaningful_matches: string | number
+    }
+
+    interface WeeklyRow extends Record<string, unknown> {
+      signup_week: string
+      users_signed_up: string | number
+      onboarded_users: string | number
+      conversation_users: string | number
+      meaningful_match_users: string | number
+    }
+
+    const s = (summaryRows as unknown as SummaryRow[])[0]
 
     return NextResponse.json({
       new_user_conversion: {
@@ -106,7 +121,7 @@ export async function GET() {
         started_conversations: Number(s?.started_conversations ?? 0),
         meaningful_matches: Number(s?.meaningful_matches ?? 0),
       },
-      weekly_signup_cohorts: (weeklyRows as any[]).map((row) => {
+      weekly_signup_cohorts: (weeklyRows as unknown as WeeklyRow[]).map((row) => {
         const signedUp = Number(row.users_signed_up)
         return {
           signup_week: row.signup_week,

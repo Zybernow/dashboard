@@ -21,7 +21,14 @@ interface GrowthTrendChartProps {
   valueLabel?: string
 }
 
-function CustomTooltip({ active, payload, label, valueLabel }: any) {
+interface TooltipProps {
+  active?: boolean
+  payload?: Array<{ value?: number }>
+  label?: string
+  valueLabel?: string
+}
+
+function CustomTooltip({ active, payload, label, valueLabel }: TooltipProps) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-popover border rounded-lg p-3 shadow-xl text-[12px]">

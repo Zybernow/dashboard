@@ -114,7 +114,23 @@ export async function GET() {
       `),
     ])
 
-    const k = kpiRows[0] as any
+    interface KpiRow extends Record<string, unknown> {
+      total_users: string | number
+      live_users_15m: string | number
+      participants: string | number
+      messages_sent: string | number
+      total_conversations: string | number
+      meaningful_matches: string | number
+      avg_messages_per_match: string | number
+      avg_call_duration_seconds: string | number
+    }
+
+    interface TrendRow extends Record<string, unknown> {
+      date: string
+      value: string | number
+    }
+
+    const k = kpiRows[0] as unknown as KpiRow
     const totalUsers = Number(k.total_users)
     const participants = Number(k.participants)
     const totalConversations = Number(k.total_conversations)
@@ -129,9 +145,9 @@ export async function GET() {
       match_conversion_rate: totalConversations > 0 ? meaningfulMatches / totalConversations : 0,
       avg_messages_per_match: Number(k.avg_messages_per_match),
       avg_call_duration_seconds: Number(k.avg_call_duration_seconds),
-      user_growth: (growthRows as any[]).map((r) => ({ date: r.date, value: Number(r.value) })),
-      new_users: (newUserRows as any[]).map((r) => ({ date: r.date, value: Number(r.value) })),
-      meaningful_match_trend: (matchTrendRows as any[]).map((r) => ({ date: r.date, value: Number(r.value) })),
+      user_growth: (growthRows as unknown as TrendRow[]).map((r) => ({ date: r.date, value: Number(r.value) })),
+      new_users: (newUserRows as unknown as TrendRow[]).map((r) => ({ date: r.date, value: Number(r.value) })),
+      meaningful_match_trend: (matchTrendRows as unknown as TrendRow[]).map((r) => ({ date: r.date, value: Number(r.value) })),
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "internal error"

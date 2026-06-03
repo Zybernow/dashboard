@@ -74,7 +74,15 @@ export async function GET(request: Request) {
       FROM cohort_users
     `)
 
-    const row = (rows as any[])[0]
+    interface FunnelRow extends Record<string, unknown> {
+      total_users: string | number
+      onboarded_users: string | number
+      conversation_users: string | number
+      meaningful_match_users: string | number
+      first_message_users: string | number
+    }
+
+    const row = (rows as unknown as FunnelRow[])[0]
     const onboardedUsers = Number(row?.onboarded_users ?? 0)
     const firstMessageUsers = Number(row?.first_message_users ?? 0)
 

@@ -50,6 +50,8 @@ function funnelColor(rate: number): string {
 
 export default function MatchIntelligencePage() {
   const [topPeriod, setTopPeriod] = useState<TopPeriod>("all")
+  const [sevenDaysAgo] = useState<number>(() => Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const [fourteenDaysAgo] = useState<number>(() => Date.now() - 14 * 24 * 60 * 60 * 1000)
 
   const { data, isLoading } = useQuery({
     queryKey: ["analytics", "match-intelligence"],
@@ -65,15 +67,14 @@ export default function MatchIntelligencePage() {
     staleTime: 2 * 60 * 1000,
   })
 
-  const allMatches = data?.matches ?? []
+  const allMatches = useMemo(() => data?.matches ?? [], [data?.matches])
   const displayMatches = topPeriod === "all" ? allMatches : (periodData?.matches ?? allMatches)
 
   const activeConversations7d = useMemo(() => {
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
     return allMatches.filter(
-      (m) => m.last_message_at && new Date(m.last_message_at).getTime() >= cutoff,
+      (m) => m.last_message_at && new Date(m.last_message_at).getTime() >= sevenDaysAgo,
     ).length
-  }, [allMatches])
+  }, [allMatches, sevenDaysAgo])
 
   const callPairsCount = useMemo(
     () => allMatches.filter((m) => m.call_count > 0).length,
@@ -95,17 +96,16 @@ export default function MatchIntelligencePage() {
   )
 
   const staleHighPotential = useMemo(() => {
-    const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000
     return [...allMatches]
       .filter(
         (m) =>
           m.message_count >= 20 &&
           m.last_message_at &&
-          new Date(m.last_message_at).getTime() < cutoff,
+          new Date(m.last_message_at).getTime() < fourteenDaysAgo,
       )
       .sort((a, b) => b.message_count - a.message_count)
       .slice(0, 3)
-  }, [allMatches])
+  }, [allMatches, fourteenDaysAgo])
 
   const funnelDropoffs = useMemo(() => {
     const points = data?.conversation_survival_curve ?? []

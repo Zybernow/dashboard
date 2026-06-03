@@ -24,7 +24,12 @@ interface FunnelChartProps {
 
 const COLORS = ["#7C6FF7", "#6B63E0", "#5A56C8", "#4A49B0"]
 
-function CustomTooltip({ active, payload }: any) {
+interface TooltipProps {
+  active?: boolean
+  payload?: Array<{ payload: FunnelStage }>
+}
+
+function CustomTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0].payload
   return (
@@ -44,7 +49,16 @@ function CustomTooltip({ active, payload }: any) {
   )
 }
 
-function CustomLabel({ x, y, width, value, index, stages }: any) {
+interface LabelProps {
+  x?: number
+  y?: number
+  width?: number
+  value?: number
+  index?: number
+  stages: FunnelStage[]
+}
+
+function CustomLabel({ x = 0, y = 0, width = 0, value, index = 0, stages }: LabelProps) {
   const stage = stages[index]
   return (
     <g>

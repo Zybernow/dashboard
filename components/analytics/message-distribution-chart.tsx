@@ -18,7 +18,13 @@ interface MessageBucket {
 
 const COLORS = ["#F87171", "#FBBF24", "#7C6FF7", "#34D399"]
 
-function CustomTooltip({ active, payload, label }: any) {
+interface TooltipProps {
+  active?: boolean
+  payload?: Array<{ value?: number }>
+  label?: string
+}
+
+function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-popover border rounded-lg p-3 shadow-xl text-[12px]">

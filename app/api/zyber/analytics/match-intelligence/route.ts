@@ -96,8 +96,38 @@ export async function GET(request: Request) {
       `),
     ])
 
+    interface DriverRow extends Record<string, unknown> {
+      message_count: string | number
+      call_count: string | number
+      u1_study_interests: unknown
+      u2_study_interests: unknown
+      u1_weekly_hustle: unknown
+      u2_weekly_hustle: unknown
+      u1_north_star: unknown
+      u2_north_star: unknown
+    }
+
+    interface ReplyRow extends Record<string, unknown> {
+      conversation_user1: string
+      conversation_user2: string
+      sender_username: string
+      created_at: string
+    }
+
+    interface PairRow extends Record<string, unknown> {
+      user1: string
+      user2: string
+      matched_at: string
+      message_count: string | number
+      call_count: string | number
+      call_seconds: string | number
+      first_message_at: string | null
+      last_message_at: string | null
+      conversation_started_at: string | null
+    }
+
     // --- Compute match quality distribution ---
-    const pairs = (driverRows as any[]).map((row) => ({
+    const pairs = (driverRows as unknown as DriverRow[]).map((row) => ({
       messageCount: Number(row.message_count),
       callCount: Number(row.call_count),
       meaningful: Number(row.message_count) >= 10,
@@ -134,8 +164,8 @@ export async function GET(request: Request) {
     })
 
     // --- Reply time median ---
-    const convMap = new Map<string, any[]>()
-    for (const row of replyRows as any[]) {
+    const convMap = new Map<string, ReplyRow[]>()
+    for (const row of replyRows as unknown as ReplyRow[]) {
       const key = [row.conversation_user1, row.conversation_user2].sort().join("__")
       if (!convMap.has(key)) convMap.set(key, [])
       convMap.get(key)!.push(row)
@@ -144,7 +174,7 @@ export async function GET(request: Request) {
     convMap.forEach((msgs) => {
       if (msgs.length < 2) return
       const firstSender = msgs[0].sender_username
-      const firstReply = msgs.find((m: any) => m.sender_username !== firstSender)
+      const firstReply = msgs.find((m) => m.sender_username !== firstSender)
       if (!firstReply) return
       const diff = (new Date(firstReply.created_at).getTime() - new Date(msgs[0].created_at).getTime()) / 60_000
       if (diff >= 0) replyTimes.push(diff)
@@ -158,7 +188,7 @@ export async function GET(request: Request) {
         : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
 
     return NextResponse.json({
-      matches: (pairRows as any[]).map((r) => ({
+      matches: (pairRows as unknown as PairRow[]).map((r) => ({
         user1: r.user1,
         user2: r.user2,
         matched_at: r.matched_at,
