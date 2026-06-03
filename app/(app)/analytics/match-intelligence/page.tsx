@@ -217,14 +217,22 @@ export default function MatchIntelligencePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {topConversations.map((m) => (
-                    <tr key={`${m.user1}-${m.user2}`} className="border-b last:border-0">
-                      <td className="py-2 pr-3">{m.user1} ↔ {m.user2}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{formatNumber(m.message_count)}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{formatNumber(m.call_count)}</td>
-                      <td className="py-2 text-right tabular-nums">{m.last_message_at ? timeAgo(m.last_message_at) : "—"}</td>
+                  {topConversations.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                        No conversations yet.
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    topConversations.map((m) => (
+                      <tr key={`${m.user1}-${m.user2}`} className="border-b last:border-0">
+                        <td className="py-2 pr-3">{m.user1} ↔ {m.user2}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{formatNumber(m.message_count)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{formatNumber(m.call_count)}</td>
+                        <td className="py-2 text-right tabular-nums">{m.last_message_at ? timeAgo(m.last_message_at) : "—"}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
