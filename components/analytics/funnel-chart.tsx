@@ -102,9 +102,9 @@ export function FunnelChart({ stages }: FunnelChartProps) {
         margin={{ top: 32, right: 4, left: -20, bottom: 0 }}
         barSize={48}
       >
-        <CartesianGrid strokeDasharray="4 4" vertical={false} className="opacity-30" />
-        <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
         <Bar
           dataKey="value"

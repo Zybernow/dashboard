@@ -41,9 +41,9 @@ export function MessageDistributionChart({ data }: { data: MessageBucket[] }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: -20, bottom: 0 }} barSize={36}>
-        <CartesianGrid strokeDasharray="4 4" vertical={false} className="opacity-30" />
-        <XAxis dataKey="bucket" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" />
+        <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
           {data.map((_, idx) => (

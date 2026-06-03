@@ -62,15 +62,15 @@ export function GrowthTrendChart({
             <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="4 4" vertical={false} className="opacity-30" />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" />
         <XAxis
           dataKey="date"
           tickFormatter={tickFormatter}
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
           axisLine={false}
           tickLine={false}
         />
-        <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip valueLabel={valueLabel} />} />
         <Area
           type="monotone"
