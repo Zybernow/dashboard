@@ -58,28 +58,28 @@ export function GrowthTrendChart({
       <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+            <stop offset="5%" stopColor="oklch(var(--primary))" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="oklch(var(--primary))" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="oklch(var(--border))" />
         <XAxis
           dataKey="date"
           tickFormatter={tickFormatter}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }}
           axisLine={false}
           tickLine={false}
         />
-        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip valueLabel={valueLabel} />} />
         <Area
           type="monotone"
           dataKey="value"
-          stroke="hsl(var(--primary))"
+          stroke="oklch(var(--primary))"
           strokeWidth={2}
           fill={`url(#${gradientId})`}
           dot={false}
-          activeDot={{ r: 4, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+          activeDot={{ r: 4, stroke: "oklch(var(--background))", strokeWidth: 2 }}
         />
       </AreaChart>
     </ResponsiveContainer>

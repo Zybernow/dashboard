@@ -16,7 +16,12 @@ interface MessageBucket {
   count: number
 }
 
-const COLORS = ["#F87171", "#FBBF24", "#7C6FF7", "#34D399"]
+const COLORS = [
+  "oklch(var(--chart-1))",
+  "oklch(var(--chart-2))",
+  "oklch(var(--chart-3))",
+  "oklch(var(--chart-4))",
+]
 
 interface TooltipProps {
   active?: boolean
@@ -41,10 +46,19 @@ export function MessageDistributionChart({ data }: { data: MessageBucket[] }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: -20, bottom: 0 }} barSize={36}>
-        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" />
-        <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="oklch(var(--border))" />
+        <XAxis
+          dataKey="bucket"
+          tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <YAxis
+          tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "oklch(var(--muted))" }} />
         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
           {data.map((_, idx) => (
             <Cell key={idx} fill={COLORS[idx % COLORS.length]} fillOpacity={0.85} />
