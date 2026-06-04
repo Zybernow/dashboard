@@ -26,7 +26,6 @@ export const users = pgTable("users", {
   role: text("role").notNull(),
   isActive: boolean("is_active").notNull(),
   isBanned: boolean("is_banned").notNull(),
-  avatarUrl: text("avatar_url"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
