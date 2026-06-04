@@ -34,7 +34,7 @@ export async function GET() {
           total_seconds: sql<number>`coalesce(sum(${messages.callDurationSeconds}), 0)::bigint`,
         })
         .from(messages)
-        .where(eq(messages.messageType, "call")),
+        .where(eq(messages.messageType, "call_record")),
       // Live user count needs Redis (the online_users ZSET), which is only
       // reachable in-VPC. The Go presence endpoint returns the live total, so
       // we read it from there rather than hitting Redis from Vercel.
