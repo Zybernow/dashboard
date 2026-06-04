@@ -2,8 +2,8 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { canAccess, type Role } from "@/lib/permissions"
 import { NAV_GROUPS } from "@/lib/nav"
+import { cn } from "@/lib/utils"
 
 export function AppSidebar({
   role,
@@ -29,11 +30,38 @@ export function AppSidebar({
   user: { name: string; email: string; image: string | null }
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
-  const visibleGroups = NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => canAccess(role, item.section)),
-  })).filter((group) => group.items.length > 0)
+  const visibleGroups = useMemo(() => {
+    return NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccess(role, item.section)),
+    })).filter((group) => group.items.length > 0)
+  }, [role])
+
+  const prefetchHrefs = useMemo(
+    () => visibleGroups.flatMap((group) => group.items.map((item) => item.href)),
+    [visibleGroups],
+  )
+
+  useEffect(() => {
+    prefetchHrefs.forEach((href) => router.prefetch(href))
+  }, [router, prefetchHrefs])
+
+  useEffect(() => {
+    setPendingHref(null)
+  }, [pathname])
+
+  const handleNavClick = (href: string) => (event: React.MouseEvent) => {
+    if (event.defaultPrevented) return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    if (event.button !== 0) return
+    event.preventDefault()
+    setPendingHref(href)
+    startTransition(() => router.push(href))
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -70,12 +98,22 @@ export function AppSidebar({
                     pathname === item.href ||
                     (item.href !== "/" && pathname.startsWith(item.href))
                   const Icon = item.icon
+                  const isPending = pendingHref === item.href && pathname !== item.href
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
                         tooltip={item.label}
                         isActive={active}
-                        render={<Link href={item.href} />}
+                        className={cn(isPending && "cursor-wait opacity-70")}
+                        aria-busy={isPending || undefined}
+                        data-pending={isPending ? "true" : undefined}
+                        render={
+                          <Link
+                            href={item.href}
+                            prefetch
+                            onClick={handleNavClick(item.href)}
+                          />
+                        }
                       >
                         <Icon />
                         <span>{item.label}</span>

@@ -23,10 +23,10 @@ interface FunnelChartProps {
 }
 
 const COLORS = [
-  "oklch(var(--chart-1))",
-  "oklch(var(--chart-2))",
-  "oklch(var(--chart-3))",
-  "oklch(var(--chart-4))",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
 ]
 
 interface TooltipProps {
@@ -71,7 +71,7 @@ function CustomLabel({ x = 0, y = 0, width = 0, value, index = 0, stages }: Labe
         x={x + width / 2}
         y={y - 8}
         textAnchor="middle"
-        fill="oklch(var(--foreground))"
+        fill="var(--foreground)"
         fontSize={11}
         fontWeight={600}
       >
@@ -107,19 +107,19 @@ export function FunnelChart({ stages }: FunnelChartProps) {
         margin={{ top: 32, right: 4, left: -20, bottom: 0 }}
         barSize={48}
       >
-        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="oklch(var(--border))" />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "oklch(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
           axisLine={false}
           tickLine={false}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "oklch(var(--muted))" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--muted)" }} />
         <Bar
           dataKey="value"
           radius={[4, 4, 0, 0]}
