@@ -50,7 +50,7 @@ export async function GET() {
           ), 0)::float AS avg_messages_per_match,
           COALESCE((
             SELECT AVG(call_duration_seconds) FROM messages
-            WHERE message_type = 'call' AND call_duration_seconds IS NOT NULL
+            WHERE message_type = 'call_record' AND call_duration_seconds IS NOT NULL
           ), 0)::float AS avg_call_duration_seconds
       `),
       dbProd.execute(sql`
