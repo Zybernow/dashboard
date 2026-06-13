@@ -282,6 +282,7 @@ export type FeatureFlags = {
   chatEditEnabled: boolean
   chatDeleteEnabled: boolean
   chatReplyEnabled: boolean
+  chatReactionsEnabled: boolean
   callRecordsEnabled: boolean
   accountDeletionEnabled: boolean
 }

@@ -22,6 +22,7 @@ const FLAG_LABELS: Record<keyof FeatureFlags, string> = {
   chatEditEnabled: "Edit chat messages",
   chatDeleteEnabled: "Delete chat messages",
   chatReplyEnabled: "Reply to chat messages",
+  chatReactionsEnabled: "React to chat messages",
   callRecordsEnabled: "Call records",
   accountDeletionEnabled: "Account deletion",
 }
@@ -30,6 +31,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chatEditEnabled: true,
   chatDeleteEnabled: true,
   chatReplyEnabled: true,
+  chatReactionsEnabled: false,
   callRecordsEnabled: true,
   accountDeletionEnabled: true,
 }
