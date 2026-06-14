@@ -25,6 +25,7 @@ const FLAG_LABELS: Record<keyof FeatureFlags, string> = {
   chatReactionsEnabled: "React to chat messages",
   callRecordsEnabled: "Call records",
   accountDeletionEnabled: "Account deletion",
+  communityChatPushEnabled: "Community chat push notifications",
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -34,6 +35,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   chatReactionsEnabled: false,
   callRecordsEnabled: true,
   accountDeletionEnabled: true,
+  communityChatPushEnabled: false,
 }
 
 export function VersionClient() {

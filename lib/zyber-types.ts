@@ -285,6 +285,7 @@ export type FeatureFlags = {
   chatReactionsEnabled: boolean
   callRecordsEnabled: boolean
   accountDeletionEnabled: boolean
+  communityChatPushEnabled: boolean
 }
 
 export type VersionConfig = {
