@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/fetcher"
 import type { FeatureFlags, VersionConfig } from "@/lib/zyber-types"
@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -38,6 +39,24 @@ const DEFAULT_FLAGS: FeatureFlags = {
   communityChatPushEnabled: false,
 }
 
+// The four version-gate text fields edited behind the "Save changes" button.
+type GateFields = Pick<
+  VersionConfig,
+  | "latest_version"
+  | "min_supported_version"
+  | "ios_update_url"
+  | "android_update_url"
+>
+
+function gateFromConfig(config: VersionConfig): GateFields {
+  return {
+    latest_version: config.latest_version,
+    min_supported_version: config.min_supported_version,
+    ios_update_url: config.ios_update_url,
+    android_update_url: config.android_update_url,
+  }
+}
+
 export function VersionClient() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
@@ -45,26 +64,52 @@ export function VersionClient() {
     queryFn: () => apiFetch<VersionConfig>("/api/zyber/version"),
   })
 
-  const [form, setForm] = useState<VersionConfig | null>(null)
-  useEffect(() => {
-    if (data && !form) setForm(data)
-  }, [data, form])
+  // Local edits for the version-gate inputs only. Toggles persist immediately
+  // and read straight from `data`, so they don't live here.
+  const [gate, setGate] = useState<GateFields | null>(null)
+  // Initialize once from the first loaded config. Setting state during render
+  // (React's recommended pattern over an effect) means a refetch after a toggle
+  // auto-save never wipes in-progress gate edits.
+  if (data && !gate) setGate(gateFromConfig(data))
 
-  const save = useMutation({
+  // Persists the version-gate inputs on top of the current server toggle state.
+  const saveGate = useMutation({
     mutationFn: (next: VersionConfig) =>
       apiFetch<VersionConfig>("/api/zyber/version", {
         method: "PUT",
         body: JSON.stringify(next),
       }),
     onSuccess: (next) => {
-      toast.success("Version config saved")
-      setForm(next)
+      toast.success("Version gate saved")
+      setGate(gateFromConfig(next))
       qc.invalidateQueries({ queryKey: ["zyber", "version"] })
     },
     onError: (err: Error) => toast.error(err.message),
   })
 
-  if (isLoading || !form) {
+  // Auto-saves a single toggle. Sends the full config built from the last-saved
+  // server values plus the changed field, so unsaved gate edits are never
+  // persisted by a toggle. Optimistic so the switch flips instantly.
+  const saveToggle = useMutation({
+    mutationFn: (next: VersionConfig) =>
+      apiFetch<VersionConfig>("/api/zyber/version", {
+        method: "PUT",
+        body: JSON.stringify(next),
+      }),
+    onMutate: async (next) => {
+      await qc.cancelQueries({ queryKey: ["zyber", "version"] })
+      const prev = qc.getQueryData<VersionConfig>(["zyber", "version"])
+      qc.setQueryData(["zyber", "version"], next)
+      return { prev }
+    },
+    onError: (err: Error, _next, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["zyber", "version"], ctx.prev)
+      toast.error(err.message)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["zyber", "version"] }),
+  })
+
+  if (isLoading || !data || !gate) {
     return <Skeleton className="h-96 w-full" />
   }
 
@@ -82,18 +127,18 @@ export function VersionClient() {
             <div className="space-y-1">
               <Label>Latest version</Label>
               <Input
-                value={form.latest_version}
+                value={gate.latest_version}
                 onChange={(e) =>
-                  setForm({ ...form, latest_version: e.target.value })
+                  setGate({ ...gate, latest_version: e.target.value })
                 }
               />
             </div>
             <div className="space-y-1">
               <Label>Min supported version</Label>
               <Input
-                value={form.min_supported_version}
+                value={gate.min_supported_version}
                 onChange={(e) =>
-                  setForm({ ...form, min_supported_version: e.target.value })
+                  setGate({ ...gate, min_supported_version: e.target.value })
                 }
               />
             </div>
@@ -102,50 +147,68 @@ export function VersionClient() {
             <div className="space-y-1">
               <Label>iOS update URL</Label>
               <Input
-                value={form.ios_update_url}
+                value={gate.ios_update_url}
                 onChange={(e) =>
-                  setForm({ ...form, ios_update_url: e.target.value })
+                  setGate({ ...gate, ios_update_url: e.target.value })
                 }
               />
             </div>
             <div className="space-y-1">
               <Label>Android update URL</Label>
               <Input
-                value={form.android_update_url}
+                value={gate.android_update_url}
                 onChange={(e) =>
-                  setForm({ ...form, android_update_url: e.target.value })
+                  setGate({ ...gate, android_update_url: e.target.value })
                 }
               />
             </div>
           </div>
         </CardContent>
+        <CardFooter className="justify-end gap-2">
+          <Button
+            variant="ghost"
+            disabled={saveGate.isPending}
+            onClick={() => setGate(gateFromConfig(data))}
+          >
+            Reset
+          </Button>
+          <Button
+            disabled={saveGate.isPending}
+            onClick={() => saveGate.mutate({ ...data, ...gate })}
+          >
+            Save changes
+          </Button>
+        </CardFooter>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Toggles</CardTitle>
           <CardDescription>
-            Server-wide modes affecting all users.
+            Server-wide modes affecting all users. Changes save instantly.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <ToggleRow
             label="Force update"
             description="Older builds are blocked from logging in."
-            value={form.force_update}
-            onChange={(v) => setForm({ ...form, force_update: v })}
+            value={data.force_update}
+            disabled={saveToggle.isPending}
+            onChange={(v) => saveToggle.mutate({ ...data, force_update: v })}
           />
           <ToggleRow
             label="Maintenance mode"
             description="All non-admin requests are rejected."
-            value={form.maintenance_mode}
-            onChange={(v) => setForm({ ...form, maintenance_mode: v })}
+            value={data.maintenance_mode}
+            disabled={saveToggle.isPending}
+            onChange={(v) => saveToggle.mutate({ ...data, maintenance_mode: v })}
           />
           <ToggleRow
             label="Work email signup open"
             description="Allow new accounts to skip work-email review."
-            value={form.workEmailOpen}
-            onChange={(v) => setForm({ ...form, workEmailOpen: v })}
+            value={data.workEmailOpen}
+            disabled={saveToggle.isPending}
+            onChange={(v) => saveToggle.mutate({ ...data, workEmailOpen: v })}
           />
         </CardContent>
       </Card>
@@ -154,7 +217,7 @@ export function VersionClient() {
         <CardHeader>
           <CardTitle>Feature flags</CardTitle>
           <CardDescription>
-            Enable or disable client-side features.
+            Enable or disable client-side features. Changes save instantly.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -162,13 +225,14 @@ export function VersionClient() {
             <ToggleRow
               key={key}
               label={FLAG_LABELS[key]}
-              value={form.featureFlags?.[key] ?? DEFAULT_FLAGS[key]}
+              value={data.featureFlags?.[key] ?? DEFAULT_FLAGS[key]}
+              disabled={saveToggle.isPending}
               onChange={(v) =>
-                setForm({
-                  ...form,
+                saveToggle.mutate({
+                  ...data,
                   featureFlags: {
                     ...DEFAULT_FLAGS,
-                    ...form.featureFlags,
+                    ...data.featureFlags,
                     [key]: v,
                   },
                 })
@@ -177,22 +241,6 @@ export function VersionClient() {
           ))}
         </CardContent>
       </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="ghost"
-          disabled={save.isPending}
-          onClick={() => data && setForm(data)}
-        >
-          Reset
-        </Button>
-        <Button
-          disabled={save.isPending}
-          onClick={() => save.mutate(form)}
-        >
-          Save changes
-        </Button>
-      </div>
     </div>
   )
 }
@@ -201,11 +249,13 @@ function ToggleRow({
   label,
   description,
   value,
+  disabled,
   onChange,
 }: {
   label: string
   description?: string
   value: boolean
+  disabled?: boolean
   onChange: (next: boolean) => void
 }) {
   return (
@@ -216,7 +266,11 @@ function ToggleRow({
           <div className="text-xs text-muted-foreground">{description}</div>
         ) : null}
       </div>
-      <Switch checked={value} onCheckedChange={(v) => onChange(!!v)} />
+      <Switch
+        checked={value}
+        disabled={disabled}
+        onCheckedChange={(v) => onChange(!!v)}
+      />
     </div>
   )
 }
